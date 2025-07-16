@@ -8,10 +8,9 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 from datetime import timedelta
 
-# Load environment variables
 load_dotenv()
 
-# Initialize extensions 
+# Initialize extensions
 db = SQLAlchemy()
 api = Api()
 bcrypt = Bcrypt()
@@ -34,6 +33,15 @@ def create_app():
     jwt.init_app(app)
     migrate.init_app(app, db)
 
+    # Import and register blueprints
+    from .models.user import User
+    from .models.club import Club
+    from .models.movie import Movie
+    from .models.post import Post
+    from .models.review import Review
+    from .models.watchlist import Watchlist # Assuming this is the correct name for watchlist.py's model
+    from .models.follow import Follow # Assuming this is the correct name for follow.py's model')
+
     # Error handlers
     @app.errorhandler(404)
     def not_found(error):
@@ -48,9 +56,9 @@ def create_app():
         db.session.rollback()
         return make_response(jsonify({'message': f'Unexpected error: {str(e)}'}), 500)
 
-    # Simple root route
+     # Simple root route
     @app.route('/')
     def index():
         return jsonify(message="Welcome to the TV Series & Movies Club API!")
 
-    return app
+        return app
