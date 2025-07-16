@@ -34,13 +34,13 @@ def create_app():
     migrate.init_app(app, db)
 
     # Import and register blueprints
-    from .models.user import User
-    from .models.club import Club
-    from .models.movie import Movie
-    from .models.post import Post
-    from .models.review import Review
-    from .models.watchlist import Watchlist # Assuming this is the correct name for watchlist.py's model
-    from .models.follow import Follow # Assuming this is the correct name for follow.py's model')
+    #from .models.user import User
+    #from .models.club import Club
+    #from .models.movie import Movie
+    #from .models.post import Post
+    #from .models.review import Review
+    #from .models.watchlist import Watchlist # Assuming this is the correct name for watchlist.py's model
+    #from .models.follow import Follow # Assuming this is the correct name for follow.py's model')
 
     # Error handlers
     @app.errorhandler(404)
@@ -61,4 +61,4 @@ def create_app():
     def index():
         return jsonify(message="Welcome to the TV Series & Movies Club API!")
 
-        return app
+    return app
