@@ -27,13 +27,13 @@ jwt = JWTManager(app)
 migrate = Migrate(app, db)
 
 # Imports models after initializing db to avoid circular imports
-from models.user import User
-from models.club import Club
-from models.movie import Movie
-from models.post import Post
-from models.review import Review
-from models.club_member import ClubMember
-from models.follower import Follower
+from .models.user import User
+from .models.club import Club
+from .models.movie import Movie
+from .models.post import Post
+from .models.review import Review
+from .models.club_member import ClubMember
+from .models.follower import Follower
 
 # error handling   
 @app.errorhandler(404)
