@@ -1,4 +1,4 @@
-from app import db
+from  .import db
 # from .user import User
 # from .club import Club
 # from .movie import Movie
