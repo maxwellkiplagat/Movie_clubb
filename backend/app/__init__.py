@@ -34,7 +34,7 @@ def create_app():
     migrate.init_app(app, db)
 
     # Import and register blueprints
-    #from .models.user import User
+    from .models.user import User
     #from .models.club import Club
     #from .models.movie import Movie
     #from .models.post import Post
