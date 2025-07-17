@@ -1,34 +1,38 @@
 # Python / Flask ignores
-    __pycache__/
-    *.pyc
-    *.pyo
-    *.pyd
-    .Python
-    env/
-    venv/
-    .venv/
-    pip-log.txt
-    pip-delete-this-directory.txt
-    .tox/
-    .coverage
-    .pytest_cache/
-    instance/
-    .flaskenv
-    .vscode/
-    *.sqlite3
-    *.db
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.pytest_cache/
+instance/
+.flaskenv
+.vscode/
+*.sqlite3
+*.db
 
-    # Environment variables
-    .env
-    .flaskenv
+# Environment variables
+.env
+.flaskenv
 
-    # Node.js / Frontend ignores
-    node_modules/
-    build/
-    .DS_Store
-    npm-debug.log*
-    yarn-debug.log*
-    yarn-error.log*
-    .env.local
-    .env.development.lo
-ctf-eeed-xqv
+# Node.js / Frontend ignores
+node_modules/
+build/
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# If frontend is in a subdirectory
+/frontend/node_modules/
