@@ -245,20 +245,24 @@ textarea {
 input, textarea {
   margin-top: 6px;
 }
-/* Welcome section */
-.feed-welcome {
+.feed-welcome-box {
+  background-color: #1a2a44;
+  padding: 40px;
+  border-radius: 10px;
   text-align: center;
-  padding: 40px 0;
+  margin-bottom: 40px;
+  max-width: 800px;
+  margin: 40px auto;
 }
 
-.feed-welcome h1 {
-  font-size: 32px;
+.feed-welcome-box h1 {
+  font-size: 2.5rem; /* Increased from default ~2rem */
+  margin-bottom: 12px;
   color: #ff5733;
-  margin-bottom: 8px;
 }
 
-.feed-welcome p {
-  font-size: 18px;
+.feed-welcome-box p {
+  font-size: 1.2rem;
   color: #ccc;
   margin-bottom: 20px;
 }
@@ -266,31 +270,34 @@ input, textarea {
 .feed-buttons {
   display: flex;
   justify-content: center;
-  gap: 16px;
-  margin-bottom: 40px;
+  gap: 20px;
 }
 
-.login-btn {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #555;
-  color: #fff;
-  border-radius: 6px;
+.feed-buttons a {
+  text-decoration: none;
+}
+
+.feed-buttons a {
+  text-decoration: none !important; /* Forces no underline */
+}
+
+
+.login-btn-box {
+  border: 2px solid #ff5733;
+  padding: 8px 16px;
+  border-radius: 4px;
+  color: #ff5733;
+  background: none;
   text-decoration: none;
   font-weight: bold;
-  transition: background-color 0.3s ease;
+  transition: 0.3s ease;
 }
 
-.login-btn:hover {
-  background-color: #777;
+.login-btn-box:hover {
+  background-color: #ff5733;
+  color: #fff;
 }
 
-/* Post list and card */
-.feed-list {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
 
 .post-card {
   background-color: #1a2a44;
