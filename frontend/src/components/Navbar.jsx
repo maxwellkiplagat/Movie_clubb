@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../features/auth/authSlice';
+import '../styles.css';
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -11,19 +12,25 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <span className="logo">CineClub</span>
-      <ul>
-        <li><Link to="/feed">Feed</Link></li>
-        <li><Link to="/tracker">My Tracker</Link></li>
+      <ul className="nav-links">
+        <li><Link to="/feed" className="nav-item">Feed</Link></li>
+        <li><Link to="/tracker" className="nav-item">My Tracker</Link></li>
         {isAuthenticated ? (
           <li>
-            <button onClick={() => { dispatch(logout()); navigate('/login'); }}>
+            <button
+              className="nav-item nav-button"
+              onClick={() => {
+                dispatch(logout());
+                navigate('/login');
+              }}
+            >
               Logout
             </button>
           </li>
         ) : (
           <>
-            <li><Link to="/login">Login</Link></li>
-            <li><Link to="/register" className="join-btn">Join Now</Link></li>
+            <li><Link to="/login" className="nav-item">Login</Link></li>
+            <li><Link to="/register" className="nav-item join-btn">Join Now</Link></li>
           </>
         )}
       </ul>
