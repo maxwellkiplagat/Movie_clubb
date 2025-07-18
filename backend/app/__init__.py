@@ -35,8 +35,8 @@ def create_app():
 
     # Import and register blueprints
     from .models.user import User
-    #from .models.club import Club
-    #from .models.movie import Movie
+    from .models.club import Club
+    from .models.movie import Movie
     #from .models.post import Post
     #from .models.review import Review
     #from .models.watchlist import Watchlist # Assuming this is the correct name for watchlist.py's model
