@@ -6,6 +6,7 @@ import Register from './features/pages/Register';
 import Feed from './features/pages/Feed';
 import ClubPage from './features/pages/ClubPage';
 import MovieTracker from './features/pages/MovieTracker';
+import Watchlist from './features/pages/Watchlist'; // ✅ Import Watchlist
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/feed" element={<Feed />} />
         <Route path="/club" element={<ClubPage />} />
         <Route path="/tracker" element={<MovieTracker />} />
+        <Route path="/watchlist" element={<Watchlist />} /> {/* ✅ Add Watchlist route */}
       </Routes>
     </>
   );
