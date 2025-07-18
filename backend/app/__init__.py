@@ -6,7 +6,9 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from flask_cors import CORS
 from datetime import timedelta
+
 
 load_dotenv()
 
@@ -16,6 +18,7 @@ api = Api()
 bcrypt = Bcrypt()
 jwt = JWTManager()
 migrate = Migrate()
+cors = CORS()
 
 def create_app():
     app = Flask(__name__)
@@ -32,6 +35,7 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
+    cors.init_app(app)
 
     # Import and register blueprints
     from .models.user import User

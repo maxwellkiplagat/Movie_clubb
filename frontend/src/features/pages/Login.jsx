@@ -1,21 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../auth/authSlice';
+import { loginUser, clearError } from '../auth/authSlice';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+  });
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { status, error } = useSelector((s) => s.auth);
+  const { isLoading, error, isAuthenticated } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/feed');
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch, formData]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(login({ email, password }));
-    if (result.meta.requestStatus === 'fulfilled') {
-      navigate('/feed');
-    }
+    dispatch(clearError());
+
+    dispatch(loginUser({
+      username: formData.username,
+      password: formData.password,
+    }));
   };
 
   return (
@@ -23,13 +41,29 @@ const Login = () => {
       <form className="form-container" onSubmit={handleSubmit}>
         <h2>Sign In</h2>
         {error && <p className="error">{error}</p>}
-        <label>Email:</label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+        
+        <label>Username:</label>
+        <input
+          type="text"
+          name="username"
+          value={formData.username}
+          onChange={handleChange}
+          required
+        />
+
         <label>Password:</label>
-        <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-        <button type="submit" disabled={status === 'loading'}>
-          {status === 'loading' ? 'Signing In...' : 'Sign In'}
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Signing In...' : 'Sign In'}
         </button>
+
         <p>Don't have an account? <Link to="/register">Join the Community</Link></p>
       </form>
     </div>
