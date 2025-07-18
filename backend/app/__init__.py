@@ -41,6 +41,7 @@ def create_app():
     #from .models.review import Review
     #from .models.watchlist import Watchlist # Assuming this is the correct name for watchlist.py's model
     #from .models.follow import Follow # Assuming this is the correct name for follow.py's model')
+    from .routes.auth_routes import UserRegistration, UserLogin, CheckSession
 
     # Error handlers
     @app.errorhandler(404)
@@ -60,5 +61,9 @@ def create_app():
     @app.route('/')
     def index():
         return jsonify(message="Welcome to the TV Series & Movies Club API!")
+    
+    api.add_resource(UserRegistration, '/register')
+    api.add_resource(UserLogin, '/login')
+    api.add_resource(CheckSession, '/check_session')
 
     return app
