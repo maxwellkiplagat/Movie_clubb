@@ -1,0 +1,14 @@
+[33m19600e5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaxwell-githinji[m[33m, [m[1;31morigin/maxwell-githinji[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/ian-biondo[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{0}: reset: moving to origin/master
+[33m19600e5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaxwell-githinji[m[33m, [m[1;31morigin/maxwell-githinji[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/ian-biondo[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{1}: checkout: moving from master to maxwell-githinji
+[33m19600e5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaxwell-githinji[m[33m, [m[1;31morigin/maxwell-githinji[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/ian-biondo[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{2}: pull origin master: Fast-forward
+[33m616cf5c[m HEAD@{3}: checkout: moving from maxwell-githinji to master
+[33m19600e5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaxwell-githinji[m[33m, [m[1;31morigin/maxwell-githinji[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/ian-biondo[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{4}: reset: moving to origin/master
+[33m616cf5c[m HEAD@{5}: checkout: moving from master to maxwell-githinji
+[33m616cf5c[m HEAD@{6}: checkout: moving from maxwell-githinji to master
+[33m616cf5c[m HEAD@{7}: checkout: moving from master to maxwell-githinji
+[33m616cf5c[m HEAD@{8}: pull --tags origin master: Fast-forward
+[33md8ac912[m[33m ([m[1;31morigin/ian-matuu[m[33m, [m[1;31morigin/brian-ochieng[m[33m)[m HEAD@{9}: checkout: moving from maxwell-githinji to master
+[33m616cf5c[m HEAD@{10}: reset: moving to origin/maxwell-githinji
+[33m616cf5c[m HEAD@{11}: pull origin master: Fast-forward
+[33md8ac912[m[33m ([m[1;31morigin/ian-matuu[m[33m, [m[1;31morigin/brian-ochieng[m[33m)[m HEAD@{12}: checkout: moving from master to maxwell-githinji
+[33md8ac912[m[33m ([m[1;31morigin/ian-matuu[m[33m, [m[1;31morigin/brian-ochieng[m[33m)[m HEAD@{13}: clone: from github.com:dennis436/tv-series-movies-club.git
