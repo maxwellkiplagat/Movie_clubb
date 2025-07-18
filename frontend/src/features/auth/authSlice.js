@@ -1,47 +1,68 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = 'http://localhost:5000'; // adjust backend URL if needed
 
-export const login = createAsyncThunk('auth/login', async ({ email, password }, { rejectWithValue }) => {
-  try {
-    const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-    return response.data;
-  } catch (error) {
-    return rejectWithValue(error.response.data);
+export const login = createAsyncThunk(
+  'auth/login',
+  async ({ email, password }, thunkAPI) => {
+    try {
+      const res = await axios.post(`${BASE_URL}/login`, { email, password });
+      localStorage.setItem('token', res.data.access_token);
+      return res.data.user;
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Login failed';
+      return thunkAPI.rejectWithValue(msg);
+    }
   }
-});
+);
 
-// ... (other async thunks like register)
+export const register = createAsyncThunk(
+  'auth/register',
+  async ({ username, email, password }, thunkAPI) => {
+    try {
+      const res = await axios.post(`${BASE_URL}/register`, { username, email, password });
+      return res.data.user;
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Registration failed';
+      return thunkAPI.rejectWithValue(msg);
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
     user: null,
-    token: null,
     status: 'idle',
     error: null,
+    isAuthenticated: !!localStorage.getItem('token'),
   },
   reducers: {
-    logout: (state) => {
+    logout(state) {
       state.user = null;
-      state.token = null;
+      state.isAuthenticated = false;
+      localStorage.removeItem('token');
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(login.pending, (state) => {
-        state.status = 'loading';
+      // login
+      .addCase(login.pending, (s) => { s.status = 'loading'; s.error = null; })
+      .addCase(login.fulfilled, (s, action) => {
+        s.status = 'succeeded';
+        s.user = action.payload;
+        s.isAuthenticated = true;
       })
-      .addCase(login.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+      .addCase(login.rejected, (s, action) => { s.status = 'failed'; s.error = action.payload; })
+      // register
+      .addCase(register.pending, (s) => { s.status = 'loading'; s.error = null; })
+      .addCase(register.fulfilled, (s, action) => {
+        s.status = 'succeeded';
+        s.user = action.payload;
+        s.isAuthenticated = true;
       })
-      .addCase(login.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload.message;
-      });
+      .addCase(register.rejected, (s, action) => { s.status = 'failed'; s.error = action.payload; });
   },
 });
 

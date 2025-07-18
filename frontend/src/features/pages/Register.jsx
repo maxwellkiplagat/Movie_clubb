@@ -1,77 +1,81 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { login } from '../auth/authSlice';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { register } from '../auth/authSlice';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmError, setConfirmError] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { status, error } = useSelector((state) => state.auth);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(login({ username, email, password }));
 
+    if (password !== confirmPassword) {
+      setConfirmError("Passwords do not match");
+      return;
+    } else {
+      setConfirmError('');
+    }
+
+    const result = await dispatch(register({ username, email, password }));
     if (result.meta.requestStatus === 'fulfilled') {
       navigate('/login');
     }
   };
 
   return (
-    <div>
-      <nav>
-        <span className="logo">CineClub</span>
-        <ul>
-          <li><a href="/feed">Feed</a></li>
-          <li><a href="/tracker">My Tracker</a></li>
-          <li><a href="/watchlist">Watchlist</a></li>
-          <li><a href="/login">Login</a></li>
-          <li><button className="join-btn" onClick={() => navigate('/register')}>Join Now</button></li>
-        </ul>
-      </nav>
-      <div className="form-container">
+    <div className="form-page">
+      <form className="form-container" onSubmit={handleSubmit}>
         <h2>Join the Community</h2>
         {error && <p className="error">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label>Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" disabled={status === 'loading'}>
-            {status === 'loading' ? 'Joining...' : 'Join Now'}
-          </button>
-        </form>
-        <p className="link">
+        {confirmError && <p className="error">{confirmError}</p>}
+
+        <label>Username:</label>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+
+        <label>Email:</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+
+        <label>Password:</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        <label>Confirm Password:</label>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+
+        <button type="submit" disabled={status === 'loading'}>
+          {status === 'loading' ? 'Joining...' : 'Join Now'}
+        </button>
+
+        <p>
           Already have an account? <Link to="/login">Sign In</Link>
         </p>
-      </div>
+      </form>
     </div>
   );
 };

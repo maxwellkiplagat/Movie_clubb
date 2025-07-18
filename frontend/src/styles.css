@@ -1,146 +1,111 @@
+/* === GLOBAL === */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background-color: #1a202c;
-  color: #fff;
-  min-height: 100vh;
+  background-color: #f7f9fb;
+  color: #333;
 }
 
-nav {
-  width: 100%;
-  background-color: #2d3748;
-  padding: 10px 20px;
+/* === NAVBAR === */
+.navbar {
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 10;
 }
-
-nav .logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #f97316;
+.logo {
+  font-size: 24px;
+  color: #2c3e50;
 }
-
-nav ul {
+.navbar ul {
   list-style: none;
   display: flex;
-  gap: 20px;
+  gap: 16px;
   margin: 0;
-  padding: 0;
 }
-
-nav a {
-  color: #fff;
+.navbar a,
+.navbar button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 16px;
   text-decoration: none;
 }
-
-nav a:hover {
+.navbar a:hover,
+.navbar button:hover {
   text-decoration: underline;
 }
-
-nav .join-btn {
-  background-color: #f97316;
+.join-btn {
+  background-color: #007bff;
   color: #fff;
-  padding: 5px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+.join-btn:hover {
+  background-color: #0056b3;
 }
 
-nav .join-btn:hover {
-  background-color: #e05316;
+/* === FORM PAGES === */
+.form-page {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
 }
-
 .form-container {
-  margin-top: 80px;
-  padding: 20px;
-  background-color: #2d3748;
+  background: #fff;
+  padding: 32px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.form-container h2 {
-  text-align: center;
-  color: #f97316;
-  margin-bottom: 20px;
-}
-
-.form-container form {
+  width: 320px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
-
+.form-container h2 {
+  margin-bottom: 16px;
+  text-align: center;
+}
 .form-container label {
-  font-size: 0.875rem;
-  margin-bottom: 5px;
+  font-size: 14px;
 }
-
 .form-container input {
   padding: 8px;
-  background-color: #4a5568;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.form-container button {
+  margin-top: 16px;
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
   border: none;
   border-radius: 4px;
-  color: #fff;
-  width: 100%;
-}
-
-.form-container button {
-  padding: 10px;
-  background-color: #f97316;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
   cursor: pointer;
 }
-
-.form-container button:hover {
-  background-color: #e05316;
-}
-
 .form-container button:disabled {
-  background-color: #a3bffa;
-  cursor: not-allowed;
+  background-color: #ccc;
+  cursor: default;
 }
-
-.form-container .error {
-  color: #ef4444;
+.error {
+  color: red;
+  font-size: 14px;
   text-align: center;
-  margin-bottom: 10px;
 }
 
-.form-container .link {
-  text-align: center;
-  margin-top: 20px;
+/* === PAGE CONTAINERS === */
+.page-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 16px;
 }
-
-.form-container .link a {
-  color: #f97316;
-  text-decoration: none;
+.page-container h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
 }
-
-.form-container .link a:hover {
-  text-decoration: underline;
-}
-
-@media (max-width: 768px) {
-  nav {
-    flex-direction: column;
-    gap: 10px;
-  }
-  nav ul {
-    flex-direction: column;
-    gap: 10px;
-  }
-  .form-container {
-    margin-top: 100px;
-  }
+.page-container p {
+  font-size: 16px;
+  color: #555;
 }

@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../auth/authSlice';
-import { Link } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { status, error } = useSelector((state) => state.auth);
+  const { status, error } = useSelector((s) => s.auth);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,47 +19,19 @@ const Login = () => {
   };
 
   return (
-    <div>
-      <nav>
-        <span className="logo">CineClub</span>
-        <ul>
-          <li><a href="/feed">Feed</a></li>
-          <li><a href="/tracker">My Tracker</a></li>
-          <li><a href="/watchlist">Watchlist</a></li>
-          <li><a href="/login">Login</a></li>
-          <li><button className="join-btn" onClick={() => navigate('/register')}>Join Now</button></li>
-        </ul>
-      </nav>
-      <div className="form-container">
+    <div className="form-page">
+      <form className="form-container" onSubmit={handleSubmit}>
         <h2>Sign In</h2>
         {error && <p className="error">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" disabled={status === 'loading'}>
-            {status === 'loading' ? 'Signing In...' : 'Sign In'}
-          </button>
-        </form>
-        <p className="link">
-          Don't have an account? <Link to="/register">Join the Community</Link>
-        </p>
-      </div>
+        <label>Email:</label>
+        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+        <label>Password:</label>
+        <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+        <button type="submit" disabled={status === 'loading'}>
+          {status === 'loading' ? 'Signing In...' : 'Sign In'}
+        </button>
+        <p>Don't have an account? <Link to="/register">Join the Community</Link></p>
+      </form>
     </div>
   );
 };
