@@ -175,3 +175,144 @@ body {
   background-color: #e03e00;
   border-color: #fff;
 }
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.post-card {
+  display: flex;
+  background-color: #1a2a44;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.poster-img {
+  width: 150px;
+  object-fit: cover;
+}
+
+.post-content {
+  padding: 16px;
+  flex: 1;
+}
+
+.genre-badge {
+  background-color: #444;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-left: 8px;
+  color: #fff;
+}
+
+.post-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.post-btn {
+  background-color: transparent;
+  color: #ff5733;
+  border: 1px solid #ff5733;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.post-btn:hover {
+  background-color: #ff5733;
+  color: white;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #2c3e50;
+  color: white;
+}
+
+input, textarea {
+  margin-top: 6px;
+}
+/* Welcome section */
+.feed-welcome {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.feed-welcome h1 {
+  font-size: 32px;
+  color: #ff5733;
+  margin-bottom: 8px;
+}
+
+.feed-welcome p {
+  font-size: 18px;
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+.feed-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.login-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #555;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+  background-color: #777;
+}
+
+/* Post list and card */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.post-card {
+  background-color: #1a2a44;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.post-card h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: #ff5733;
+}
+
+.post-card p {
+  color: #ddd;
+}
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #bbb;
+  margin-top: 12px;
+}
