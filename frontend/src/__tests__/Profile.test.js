@@ -1,181 +1,157 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { BrowserRouter, useNavigate } from 'react-router-dom';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import axios from 'axios';
-import Profile from '../../components/Profile';
+import Login from '../../components/Login';
 
-// Mock dependencies
 jest.mock('axios');
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: jest.fn(),
-}));
 
-// Test wrapper component
-const renderWithRouter = (component) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
-};
-
-describe('Profile Component', () => {
-  let mockNavigate;
-
+describe('Signup Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
-    localStorage.setItem('token', 'mock-token');
-    mockNavigate = jest.fn();
-    useNavigate.mockReturnValue(mockNavigate);
   });
 
-  afterEach(() => {
-    cleanup();
-  });
+  const setup = () => {
+    render(
+      <BrowserRouter>
+        <Login />
+      </BrowserRouter>
+    );
+    return {
+      emailInput: screen.getByPlaceholderText(/email/i),
+      passwordInput: screen.getByPlaceholderText(/password/i),
+      nameInput: screen.getByPlaceholderText(/name/i),
+      signupTab: screen.getByRole('button', { name: /sign up/i }),
+      submitButton: screen.getByRole('button', { name: /create account/i }),
+    };
+  };
 
-  test('renders Profile component without crashing', () => {
-    renderWithRouter(<Profile />);
-    expect(screen.getByTestId('profile-container')).toBeInTheDocument();
-  });
-
-  test('renders user profile and allows updates', async () => {
-    axios.get.mockResolvedValueOnce({ 
-      data: { id: 1, name: 'Brian', bio: 'Movie enthusiast' } 
+  test('allows user to create an account successfully', async () => {
+    axios.post.mockResolvedValueOnce({
+      data: { token: 'mock-token', user: { id: 1, email: 'new@example.com', name: 'New User' } },
     });
-    axios.put.mockResolvedValueOnce({ 
-      data: { name: 'Brian Ochieng', bio: 'Updated bio' } 
-    });
 
-    renderWithRouter(<Profile />);
+    const { emailInput, passwordInput, nameInput, signupTab, submitButton } = setup();
+
+    fireEvent.click(signupTab);
+    fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123!' } });
+    fireEvent.change(nameInput, { target: { value: 'New User' } });
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledWith('/api/profile', {
-        headers: { Authorization: 'Bearer mock-token' },
-      });
-      expect(screen.getByTestId('profile-name')).toHaveTextContent(/Brian/i);
-      expect(screen.getByTestId('profile-bio')).toHaveTextContent(/Movie enthusiast/i);
-    });
-
-    const nameInput = screen.getByTestId('name-input');
-    const bioInput = screen.getByTestId('bio-input');
-    const saveButton = screen.getByTestId('save-button');
-
-    fireEvent.change(nameInput, { target: { value: 'Brian Ochieng' } });
-    fireEvent.change(bioInput, { target: { value: 'Updated bio' } });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      expect(axios.put).toHaveBeenCalledWith(
-        '/api/profile',
-        { name: 'Brian Ochieng', bio: 'Updated bio' },
-        { headers: { Authorization: 'Bearer mock-token' } }
+      expect(axios.post).toHaveBeenCalledWith(
+        '/api/users',
+        {
+          email: 'new@example.com',
+          password: 'Password123!',
+          name: 'New User',
+        },
+        expect.any(Object)
       );
-      expect(screen.getByTestId('success-message')).toHaveTextContent(/profile updated/i);
+      expect(localStorage.getItem('token')).toBe('mock-token');
+      expect(screen.getByText(/account created/i)).toBeInTheDocument();
     });
   });
 
-  test('displays loading state during profile fetch', async () => {
-    axios.get.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+  test('displays error for invalid email format', async () => {
+    const { emailInput, passwordInput, nameInput, signupTab, submitButton } = setup();
 
-    renderWithRouter(<Profile />);
-
-    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+    fireEvent.click(signupTab);
+    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123!' } });
+    fireEvent.change(nameInput, { target: { value: 'New User' } });
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument();
+      expect(axios.post).not.toHaveBeenCalled();
+      expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
     });
   });
 
-  test('handles unauthorized access when token is missing', async () => {
-    localStorage.clear();
-    renderWithRouter(<Profile />);
+  test('displays error for weak password', async () => {
+    const { emailInput, passwordInput, nameInput, signupTab, submitButton } = setup();
+
+    fireEvent.click(signupTab);
+    fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'weak' } });
+    fireEvent.change(nameInput, { target: { value: 'New User' } });
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
-      expect(axios.get).not.toHaveBeenCalled();
-      expect(screen.getByTestId('error-message')).toHaveTextContent(/please log in/i);
+      expect(axios.post).not.toHaveBeenCalled();
+      expect(screen.getByText(/password must be at least 8 characters/i)).toBeInTheDocument();
     });
   });
 
-  test('handles server error when fetching profile', async () => {
-    axios.get.mockRejectedValueOnce({
-      response: { data: { error: 'Server error' }, status: 500 },
-    });
+  test('displays error for empty name field', async () => {
+    const { emailInput, passwordInput, nameInput, signupTab, submitButton } = setup();
 
-    renderWithRouter(<Profile />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toHaveTextContent(/server error/i);
-    });
-  });
-
-  test('handles validation error for empty name field', async () => {
-    axios.get.mockResolvedValueOnce({ 
-      data: { id: 1, name: 'Brian', bio: 'Movie enthusiast' } 
-    });
-
-    renderWithRouter(<Profile />);
-
-    await waitFor(() => screen.getByTestId('profile-name'));
-
-    const nameInput = screen.getByTestId('name-input');
-    const saveButton = screen.getByTestId('save-button');
-
+    fireEvent.click(signupTab);
+    fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123!' } });
     fireEvent.change(nameInput, { target: { value: '' } });
-    fireEvent.click(saveButton);
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(axios.put).not.toHaveBeenCalled();
-      expect(screen.getByTestId('error-message')).toHaveTextContent(/name is required/i);
+      expect(axios.post).not.toHaveBeenCalled();
+      expect(screen.getByText(/name is required/i)).toBeInTheDocument();
     });
   });
 
-  test('renders profile with missing bio', async () => {
-    axios.get.mockResolvedValueOnce({ 
-      data: { id: 1, name: 'Brian', bio: '' } 
+  test('displays error for email already exists', async () => {
+    axios.post.mockRejectedValueOnce({
+      response: { data: { error: 'Email already exists' } },
     });
 
-    renderWithRouter(<Profile />);
+    const { emailInput, passwordInput, nameInput, signupTab, submitButton } = setup();
+
+    fireEvent.click(signupTab);
+    fireEvent.change(emailInput, { target: { value: 'existing@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123!' } });
+    fireEvent.change(nameInput, { target: { value: 'New User' } });
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId('profile-name')).toHaveTextContent(/Brian/i);
-      expect(screen.getByTestId('profile-bio')).toHaveTextContent(/no bio provided/i);
+      expect(axios.post).toHaveBeenCalled();
+      expect(screen.getByText(/email already exists/i)).toBeInTheDocument();
     });
   });
 
-  test('matches profile snapshot with loaded data', async () => {
-    axios.get.mockResolvedValueOnce({ 
-      data: { id: 1, name: 'Brian', bio: 'Movie enthusiast' } 
+  test('handles server error gracefully', async () => {
+    axios.post.mockRejectedValueOnce({
+      response: { data: { error: 'Internal server error' } },
     });
 
-    const { container } = renderWithRouter(<Profile />);
-    
+    const { emailInput, passwordInput, nameInput, signupTab, submitButton } = setup();
+
+    fireEvent.click(signupTab);
+    fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123!' } });
+    fireEvent.change(nameInput, { target: { value: 'New User' } });
+    fireEvent.click(submitButton);
+
     await waitFor(() => {
-      expect(screen.getByTestId('profile-name')).toBeInTheDocument();
+      expect(axios.post).toHaveBeenCalled();
+      expect(screen.getByText(/an error occurred/i)).toBeInTheDocument();
     });
-    
-    expect(container).toMatchSnapshot();
   });
 
-  test('disables save button during profile update', async () => {
-    axios.get.mockResolvedValueOnce({ 
-      data: { id: 1, name: 'Brian', bio: 'Movie enthusiast' } 
-    });
-    axios.put.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+  test('handles network error', async () => {
+    axios.post.mockRejectedValueOnce(new Error('Network Error'));
 
-    renderWithRouter(<Profile />);
+    const { emailInput, passwordInput, nameInput, signupTab, submitButton } = setup();
 
-    await waitFor(() => screen.getByTestId('profile-name'));
-
-    const nameInput = screen.getByTestId('name-input');
-    const saveButton = screen.getByTestId('save-button');
-
-    fireEvent.change(nameInput, { target: { value: 'Brian Ochieng' } });
-    fireEvent.click(saveButton);
-
-    expect(saveButton).toBeDisabled();
-    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+    fireEvent.click(signupTab);
+    fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123!' } });
+    fireEvent.change(nameInput, { target: { value: 'New User' } });
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(saveButton).not.toBeDisabled();
+      expect(axios.post).toHaveBeenCalled();
+      expect(screen.getByText(/network error/i)).toBeInTheDocument();
     });
   });
 });
