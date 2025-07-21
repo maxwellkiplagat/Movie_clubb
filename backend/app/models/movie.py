@@ -14,7 +14,7 @@ class Movie(BaseModelMixin, SerializerMixin, db.Model):
     poster_url = db.Column(db.String(500)) 
 
     # Relationships
-    reviews = db.relationship('Review', backref='movie', lazy=True, cascade='all, delete-orphan')
+    reviews = db.relationship('Review', back_populates='movie', lazy=True, cascade='all, delete-orphan')
     watchlists = db.relationship('Watchlist', backref='movie', lazy=True, cascade='all, delete-orphan')
 
     serialize_rules = (
