@@ -9,20 +9,30 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+
   return (
     <nav className="navbar">
       <span className="logo">CineClub</span>
       <ul>
         <li><Link to="/feed">Feed</Link></li>
+        <li><Link to="/club">Clubs</Link></li>
         <li><Link to="/tracker">My Tracker</Link></li>
         <li><Link to="/watchlist">Watchlist</Link></li>
-        {isAuthenticated ? (
-          <li>
-            <button onClick={() => { dispatch(logout()); navigate('/login'); }}>
-              Logout
-            </button>
-          </li>
-        ) : (
+
+        {isAuthenticated && (
+          <>
+            <li><Link to="/dashboard">Dashboard</Link></li>
+            <li>
+              <button onClick={handleLogout}>Logout</button>
+            </li>
+          </>
+        )}
+
+        {!isAuthenticated && (
           <>
             <li><Link to="/login">Login</Link></li>
             <li><Link to="/register" className="join-btn">Join Now</Link></li>

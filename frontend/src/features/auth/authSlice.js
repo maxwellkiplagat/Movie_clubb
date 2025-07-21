@@ -9,9 +9,7 @@ export const registerUser = createAsyncThunk(
     try {
       const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
 
@@ -21,9 +19,7 @@ export const registerUser = createAsyncThunk(
         return rejectWithValue(data.message || 'Registration failed');
       }
 
-      if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token);
-      }
+      // ❌ Don't save token or update auth state here
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error during registration');
@@ -37,9 +33,7 @@ export const loginUser = createAsyncThunk(
     try {
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
 
@@ -52,6 +46,7 @@ export const loginUser = createAsyncThunk(
       if (data.access_token) {
         localStorage.setItem('access_token', data.access_token);
       }
+
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error during login');
@@ -64,15 +59,11 @@ export const checkSession = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('access_token');
-      if (!token) {
-        return rejectWithValue('No token found');
-      }
+      if (!token) return rejectWithValue('No token found');
 
       const response = await fetch(`${API_URL}/check_session`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       const data = await response.json();
@@ -95,7 +86,7 @@ const authSlice = createSlice({
   initialState: {
     user: null,
     token: localStorage.getItem('access_token') || null,
-    isAuthenticated: false,
+    isAuthenticated: !!localStorage.getItem('access_token'),
     isLoading: false,
     error: null,
   },
@@ -113,23 +104,21 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // === REGISTER ===
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state) => {
         state.isLoading = false;
-        state.user = action.payload;
-        state.token = action.payload.access_token;
-        state.isAuthenticated = true;
+        // ⛔ Don't set user or isAuthenticated here
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-        state.user = null;
-        state.token = null;
-        state.isAuthenticated = false;
       })
+
+      // === LOGIN ===
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -147,6 +136,8 @@ const authSlice = createSlice({
         state.token = null;
         state.isAuthenticated = false;
       })
+
+      // === CHECK SESSION ===
       .addCase(checkSession.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -163,11 +154,9 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
-        localStorage.removeItem('access_token');
       });
   },
 });
 
 export const { logout, clearError } = authSlice.actions;
-
 export default authSlice.reducer;
