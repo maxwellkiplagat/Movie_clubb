@@ -1,32 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { register } from '../auth/authSlice';
+import { registerUser, clearError } from '../auth/authSlice'; 
 
 const Register = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formData, setFormData] = useState({ 
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [confirmError, setConfirmError] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { status, error } = useSelector((state) => state.auth);
+  const { isLoading, error, isAuthenticated } = useSelector((state) => state.auth); 
+
+  // Handle successful registration: redirect to feed or dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/feed'); 
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear error message when component mounts or form data changes
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch, formData]); 
+
+  const handleChange = (e) => { 
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    dispatch(clearError()); // Clear previous errors before new submission
 
-    if (password !== confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setConfirmError("Passwords do not match");
       return;
     } else {
       setConfirmError('');
     }
 
-    const result = await dispatch(register({ username, email, password }));
-    if (result.meta.requestStatus === 'fulfilled') {
-      navigate('/login');
-    }
+    // Dispatch the registerUser async thunk
+    dispatch(registerUser({
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+    }));
   };
 
   return (
@@ -39,37 +60,41 @@ const Register = () => {
         <label>Username:</label>
         <input
           type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          name="username" 
+          value={formData.username} 
+          onChange={handleChange} 
           required
         />
 
         <label>Email:</label>
         <input
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          name="email" 
+          value={formData.email} 
+          onChange={handleChange} 
           required
         />
 
         <label>Password:</label>
         <input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password" 
+          value={formData.password} 
+          onChange={handleChange} 
           required
         />
 
         <label>Confirm Password:</label>
         <input
           type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          name="confirmPassword" 
+          value={formData.confirmPassword} 
+          onChange={handleChange} 
           required
         />
 
-        <button type="submit" disabled={status === 'loading'}>
-          {status === 'loading' ? 'Joining...' : 'Join Now'}
+        <button type="submit" disabled={isLoading}> 
+          {isLoading ? 'Joining...' : 'Join Now'} 
         </button>
 
         <p>
