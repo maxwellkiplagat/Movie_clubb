@@ -14,7 +14,9 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/feed');
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/feed';
+      sessionStorage.removeItem('redirectAfterLogin');
+      navigate(redirectPath);
     }
   }, [isAuthenticated, navigate]);
 
@@ -26,10 +28,9 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     dispatch(clearError());
-
     dispatch(loginUser({
       username: formData.username,
       password: formData.password,
