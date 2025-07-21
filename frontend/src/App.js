@@ -12,6 +12,7 @@ import Dashboard from './features/pages/Dashboard';
 import PrivateRoute from './components/PrivateRoute';
 import ClubDetails from './features/pages/ClubDetails';
 import CreatePostInClub from './features/pages/CreatePostInClub';
+import EditProfile from './features/pages/EditProfile'; // ✅ import the new component
 
 function App() {
   return (
@@ -64,6 +65,14 @@ function App() {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <EditProfile />
             </PrivateRoute>
           }
         />

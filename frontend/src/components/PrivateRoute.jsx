@@ -1,7 +1,7 @@
 // src/components/PrivateRoute.jsx
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'; // Removed Navigate
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useSelector((state) => state.auth);
