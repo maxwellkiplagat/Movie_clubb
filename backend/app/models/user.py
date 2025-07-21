@@ -22,7 +22,18 @@ class User(BaseModelMixin, SerializerMixin, db.Model):
     # following = db.relationship('Follow', foreign_keys='Follow.follower_id', backref='follower', lazy=True)
     # watchlists = db.relationship('Watchlist', backref='user', lazy=True)
 
-    serialize_rules = ('-created_at', '-updated_at', '-_password_hash')
+    serialize_rules = (
+        '-password_hash',
+        '-created_at',
+        '-updated_at',
+        '-clubs_created.creator',       
+        '-club_memberships.user',       
+        '-posts.author',                
+        '-reviews.user',               
+        '-watchlist_entries.user',     
+        '-following.follower',         
+        '-followed.followed',
+    )
 
     def __repr__(self):
         return f'<User {self.username}>'

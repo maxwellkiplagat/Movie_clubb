@@ -28,9 +28,16 @@ class Club(BaseModelMixin, SerializerMixin, db.Model):
     serialize_rules = (
         '-created_at',
         '-updated_at',
-        '-posts.club', 
-        '-members.club', 
-        'creator.username',         
+        '-posts.club',        
+        '-members.club',      
+        'creator.username',   
+        '-creator.clubs_created', 
+        '-creator.club_memberships', 
+        '-creator.posts',     
+        '-creator.reviews',
+        '-creator.watchlist_entries',
+        '-creator.following',
+        '-creator.followers',       
     )
 
     def __repr__(self):
