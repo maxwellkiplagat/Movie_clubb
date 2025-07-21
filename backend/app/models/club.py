@@ -13,7 +13,7 @@ class Club(BaseModelMixin, SerializerMixin, db.Model):
     created_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     # Relationships
-    creator = db.relationship('User', backref='clubs_created', foreign_keys=[created_by_user_id])
+    creator = db.relationship('User', back_populates='clubs_created', foreign_keys=[created_by_user_id])
     posts = db.relationship('Post', backref='club', lazy=True, cascade='all, delete-orphan')
 
     # Many-to-Many relationship with User through ClubMember for club members
