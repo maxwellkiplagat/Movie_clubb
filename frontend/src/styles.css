@@ -436,3 +436,41 @@ input, textarea {
   border: 2px solid #22c55e;
   background-color: #1e3a2f;
 }
+/* === DASHBOARD SECTION STYLING === */
+.dashboard-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.user-info-box {
+  background-color: #1f2937;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #374151;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  margin-top: 16px;
+}
+
+.section {
+  margin-top: 50px;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ff5733;
+  margin-bottom: 1rem;
+}
+.club-card.joined .join-btn {
+  text-decoration: none !important;
+}
+/* === Edit Profile Link === */
+a.join-btn,
+a.join-btn:visited {
+  text-decoration: none;
+}
+
+a.join-btn:hover {
+  text-decoration: none;
+}
