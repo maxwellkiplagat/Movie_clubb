@@ -14,7 +14,7 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
     club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=False)
 
     # Relationships
-    author = db.relationship('User', backref='posts', foreign_keys=[user_id])
+    author = db.relationship('User', back_populates='posts', foreign_keys=[user_id])
     serialize_rules = (
         '-created_at',
         '-updated_at',
