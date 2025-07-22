@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux'; 
 import {
@@ -7,15 +7,49 @@ import {
   clearCurrentClubPosts, 
 } from '../clubs/clubSlice'; 
 
-// PostCard component to display individual posts
-const PostCard = ({ post }) => {
+// PostCard component to display individual posts (updated to include interactive elements)
+const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments, following }) => {
   return (
     <div className="post-card bg-gray-800 rounded-lg p-4 shadow-md mb-4">
       <h2 className="text-xl font-bold text-blue-400 mb-2">{post.movie_title}</h2>
       <p className="text-gray-300 mb-3">{post.content}</p>
       <div className="post-meta text-sm text-gray-400 flex justify-between items-center">
-        <span>By @{post.author_username || 'Unknown'}</span> {/* Use author_username from backend */}
-        <span>{new Date(post.created_at).toLocaleDateString()}</span> {/* Format date */}
+        {/* Use author_username from backend and created_at_formatted */}
+        <span>By @{post.author_username || 'Unknown'}</span> 
+        <span>{new Date(post.created_at_formatted).toLocaleDateString()}</span> 
+      </div>
+
+      {/* Max's interactive elements */}
+      <div className="mt-2 flex gap-3 items-center text-sm">
+        <button onClick={() => toggleLike(post.id)} className="text-blue-400 hover:underline">
+          ❤️ Like ({likes[post.id] || 0})
+        </button>
+
+        {/* Use post.author_username for following logic */}
+        <button onClick={() => toggleFollow(post.author_username)} className="text-purple-400 hover:underline">
+          {following[post.author_username] ? 'Unfollow' : 'Follow'} @{post.author_username}
+        </button>
+      </div>
+
+      <div className="mt-4">
+        <h4 className="font-semibold mb-1">💬 Comments:</h4>
+        <ul className="text-sm text-gray-300 mb-2">
+          {(comments[post.id] || []).map((cmt, i) => (
+            <li key={i} className="mb-1">- {cmt}</li>
+          ))}
+        </ul>
+
+        <input
+          type="text"
+          placeholder="Add a comment..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && e.target.value.trim() !== '') {
+              addComment(post.id, e.target.value.trim());
+              e.target.value = '';
+            }
+          }}
+          className="bg-gray-800 px-2 py-1 rounded w-full text-white"
+        />
       </div>
     </div>
   );
@@ -24,6 +58,11 @@ const PostCard = ({ post }) => {
 function ClubDetails() {
   const { id } = useParams(); // Get club ID from URL
   const dispatch = useDispatch(); 
+
+  // Max's interactive state for local UI (likes, comments, following)
+  const [likes, setLikes] = useState({});
+  const [comments, setComments] = useState({});
+  const [following, setFollowing] = useState({});
 
   // Redux state selectors
   const { allClubs, currentClubPosts, isLoading, error } = useSelector((state) => state.clubs);
@@ -41,6 +80,29 @@ function ClubDetails() {
     };
   }, [id, dispatch]); 
 
+  // Max's interactive functions
+  const toggleLike = (postId) => {
+    setLikes(prev => ({
+      ...prev,
+      [postId]: prev[postId] ? prev[postId] + 1 : 1
+    }));
+  };
+
+  const addComment = (postId, text) => {
+    setComments(prev => ({
+      ...prev,
+      [postId]: [...(prev[postId] || []), text]
+    }));
+  };
+
+  const toggleFollow = (authorUsername) => { // Changed to authorUsername for clarity
+    setFollowing(prev => ({
+      ...prev,
+      [authorUsername]: !prev[authorUsername]
+    }));
+  };
+
+  // Loading, error, and club not found checks (your version)
   if (isLoading && !club && currentClubPosts.length === 0) {
     return <p className="text-blue-400 text-center mt-8">Loading club details and posts...</p>;
   }
@@ -82,7 +144,16 @@ function ClubDetails() {
       ) : (
         <div className="feed-list mt-8">
           {currentClubPosts.map(post => (
-            <PostCard key={post.id} post={post} />
+            <PostCard 
+              key={post.id} 
+              post={post} 
+              toggleLike={toggleLike}
+              addComment={addComment}
+              toggleFollow={toggleFollow}
+              likes={likes}
+              comments={comments}
+              following={following}
+            />
           ))}
         </div>
       )}

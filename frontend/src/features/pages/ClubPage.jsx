@@ -18,7 +18,7 @@ const ClubPage = () => {
   const { allClubs, myClubs, isLoading: clubsLoading, error } = useSelector((state) => state.clubs);
   const [message, setMessage] = useState(null);
 
-  // Debugging logs for component render
+  // Debugging logs for component render 
   useEffect(() => {
     console.log("ClubPage Render - isAuthenticated:", isAuthenticated);
     console.log("ClubPage Render - user:", user);
@@ -118,7 +118,7 @@ const ClubPage = () => {
   return (
     <div className="club-page">
       <div className="feed-welcome-box">
-        <h1 className="text-xl font-bold mb-2">🎬 Join a Club</h1>
+        <h1 className="text-xl font-bold mb-2">🎬 Join a Club</h1> 
         <p className="text-gray-300">Find a community that shares your taste in TV shows and movies!</p>
       </div>
 
