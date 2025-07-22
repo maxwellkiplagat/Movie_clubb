@@ -19,10 +19,10 @@ class Club(BaseModelMixin, SerializerMixin, db.Model):
     # Many-to-Many relationship with User through ClubMember for club members
     members = db.relationship(
         'ClubMember',
-        backref='club',
-        lazy=True,
-        cascade='all, delete-orphan' 
-    )
+         back_populates='club', 
+         lazy=True,
+         cascade='all, delete-orphan'
+)
 
     # Define serialization rules to avoid recursion and include necessary fields
     serialize_rules = (
