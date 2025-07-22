@@ -11,7 +11,6 @@ export const fetchAllClubs = createAsyncThunk(
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      // Fetch all clubs
       const response = await fetch(`${API_URL}/clubs/`, { headers }); 
       const data = await response.json();
       if (!response.ok) {
@@ -34,6 +33,7 @@ export const fetchMyClubs = createAsyncThunk(
         return rejectWithValue('User not authenticated or ID missing');
       }
       const response = await fetch(`${API_URL}/users/${userId}/clubs`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -49,7 +49,7 @@ export const fetchMyClubs = createAsyncThunk(
     }
   }
 );
-// Join a club
+
 export const joinClub = createAsyncThunk(
   'clubs/joinClub',
   async (clubId, { rejectWithValue, getState }) => {
@@ -64,7 +64,7 @@ export const joinClub = createAsyncThunk(
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({}), // Ensure body is sent even if empty
+        body: JSON.stringify({}), 
       });
       const data = await response.json();
       if (!response.ok) {
@@ -76,7 +76,7 @@ export const joinClub = createAsyncThunk(
     }
   }
 );
-// Clear club error
+
 export const fetchClubPosts = createAsyncThunk(
   'clubs/fetchClubPosts',
   async (clubId, { rejectWithValue, getState }) => {
@@ -86,7 +86,7 @@ export const fetchClubPosts = createAsyncThunk(
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`${API_URL}/clubs/${clubId}/posts`, { headers });
+      const response = await fetch(`${API_URL}/posts/clubs/${clubId}/posts`, { headers });
       const data = await response.json();
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to fetch club posts');
@@ -97,7 +97,7 @@ export const fetchClubPosts = createAsyncThunk(
     }
   }
 );
-// Clear current club posts
+
 export const createPost = createAsyncThunk(
   'clubs/createPost',
   async ({ clubId, movie_title, content }, { rejectWithValue, getState }) => {
@@ -106,7 +106,7 @@ export const createPost = createAsyncThunk(
       if (!token) {
         return rejectWithValue('Authentication required to create a post.');
       }
-      const response = await fetch(`${API_URL}/clubs/${clubId}/posts`, {
+      const response = await fetch(`${API_URL}/posts/clubs/${clubId}/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ export const createPost = createAsyncThunk(
   }
 );
 
-// Redux slice for clubs
+
 const clubSlice = createSlice({
   name: 'clubs',
   initialState: {
@@ -183,8 +183,6 @@ const clubSlice = createSlice({
       })
       .addCase(joinClub.fulfilled, (state, action) => {
         state.isLoading = false;
-        // After joining, you might want to re-fetch myClubs or allClubs
-        // to update the UI. For now, just clear error.
       })
       .addCase(joinClub.rejected, (state, action) => {
         state.isLoading = false;
@@ -208,7 +206,6 @@ const clubSlice = createSlice({
       })
       .addCase(createPost.fulfilled, (state, action) => {
         state.postCreationStatus = 'succeeded';
-        
       })
       .addCase(createPost.rejected, (state, action) => {
         state.postCreationStatus = 'failed';
