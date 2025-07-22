@@ -35,8 +35,7 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app)
-
+    cors.init_app(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 # Import models to ensure they are registered with SQLAlchemy
     from .models.user import User
     from .models.club import Club

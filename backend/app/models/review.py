@@ -12,7 +12,7 @@ class Review(BaseModelMixin, SerializerMixin, db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), nullable=False)
 
-    user = db.relationship('User', backref='reviews', foreign_keys=[user_id])
+    user = db.relationship('User', back_populates='reviews', foreign_keys=[user_id])
     movie = db.relationship('Movie', back_populates='reviews', foreign_keys=[movie_id])
     serialize_rules = (
         '-created_at',

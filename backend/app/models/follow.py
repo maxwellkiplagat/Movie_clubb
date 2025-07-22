@@ -14,12 +14,12 @@ class Follow(BaseModelMixin, SerializerMixin, db.Model):
 
     follower = db.relationship(
         'User',
-        backref='following',
-        foreign_keys=[follower_id]
-    )
+         back_populates='following', 
+         foreign_keys=[follower_id]
+)
     followed = db.relationship(
         'User',
-        backref='followers',
+        back_populates='followers',
         foreign_keys=[followed_id]
     )
 # Relationships

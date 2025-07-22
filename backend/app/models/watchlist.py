@@ -15,7 +15,8 @@ class Watchlist(BaseModelMixin, SerializerMixin, db.Model):
     __table_args__ = (db.UniqueConstraint('user_id', 'movie_id', name='_user_movie_watchlist_uc'),)
 
     # Relationships
-    user = db.relationship('User', backref='watchlist_entries', foreign_keys=[user_id])
+    user = db.relationship('User', back_populates='watchlists', foreign_keys=[user_id])
+    movie = db.relationship('Movie', back_populates='watchlists', foreign_keys=[movie_id])
     serialize_rules = (
         '-created_at',
         '-updated_at',

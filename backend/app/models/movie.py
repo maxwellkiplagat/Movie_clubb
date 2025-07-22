@@ -15,7 +15,7 @@ class Movie(BaseModelMixin, SerializerMixin, db.Model):
 
     # Relationships
     reviews = db.relationship('Review', back_populates='movie', lazy=True, cascade='all, delete-orphan')
-    watchlists = db.relationship('Watchlist', backref='movie', lazy=True, cascade='all, delete-orphan')
+    watchlists = db.relationship('Watchlist', back_populates='movie', lazy=True, cascade='all, delete-orphan')
 
     serialize_rules = (
         '-created_at',
