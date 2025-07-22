@@ -7,22 +7,22 @@ import {
   clearCurrentClubPosts, 
 } from '../clubs/clubSlice'; 
 
-// PostCard component to display individual posts 
+// PostCard component to display individual posts (updated to include interactive elements)
 const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments, following }) => {
   return (
     <div className="post-card bg-gray-800 rounded-lg p-4 shadow-md mb-4">
       <h2 className="text-xl font-bold text-blue-400 mb-2">{post.movie_title}</h2>
       <p className="text-gray-300 mb-3">{post.content}</p>
       <div className="post-meta text-sm text-gray-400 flex justify-between items-center">
-      
+        {/* Use author_username from backend and created_at_formatted */}
         <span>By @{post.author_username || 'Unknown'}</span> 
         <span>{new Date(post.created_at_formatted).toLocaleDateString()}</span> 
       </div>
 
-    
+      
       <div className="mt-2 flex gap-3 items-center text-sm">
         <button onClick={() => toggleLike(post.id)} className="text-blue-400 hover:underline">
-          ❤️ Like ({likes[post.id] || 0})
+          Like ({likes[post.id] || 0}) {/* Removed emoji */}
         </button>
 
         {/* Use post.author_username for following logic */}
@@ -32,7 +32,7 @@ const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments,
       </div>
 
       <div className="mt-4">
-        <h4 className="font-semibold mb-1">💬 Comments:</h4>
+        <h4 className="font-semibold mb-1">Comments:</h4> 
         <ul className="text-sm text-gray-300 mb-2">
           {(comments[post.id] || []).map((cmt, i) => (
             <li key={i} className="mb-1">- {cmt}</li>
@@ -56,14 +56,15 @@ const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments,
 };
 
 function ClubDetails() {
-  const { id } = useParams(); 
+  const { id } = useParams(); // Get club ID from URL
   const dispatch = useDispatch(); 
 
-  // Redux state selectors
+  // State for likes, comments, and following
   const [likes, setLikes] = useState({});
   const [comments, setComments] = useState({});
   const [following, setFollowing] = useState({});
 
+  // Redux state selectors
   const { allClubs, currentClubPosts, isLoading, error } = useSelector((state) => state.clubs);
   const { isAuthenticated } = useSelector((state) => state.auth);
   const club = allClubs.find(c => c.id === parseInt(id));
@@ -79,7 +80,7 @@ function ClubDetails() {
     };
   }, [id, dispatch]); 
 
-  // Effect to check if user is authenticated and has clubs
+  // Effect to check authentication and user data
   const toggleLike = (postId) => {
     setLikes(prev => ({
       ...prev,
@@ -94,7 +95,7 @@ function ClubDetails() {
     }));
   };
 
-  const toggleFollow = (authorUsername) => { 
+  const toggleFollow = (authorUsername) => { // Changed to authorUsername for clarity
     setFollowing(prev => ({
       ...prev,
       [authorUsername]: !prev[authorUsername]

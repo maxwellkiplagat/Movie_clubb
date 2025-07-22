@@ -18,7 +18,7 @@ const ClubPage = () => {
   const { allClubs, myClubs, isLoading: clubsLoading, error } = useSelector((state) => state.clubs);
   const [message, setMessage] = useState(null);
 
-  // Debugging logs for component render 
+  // Effect to log state changes for debugging
   useEffect(() => {
     console.log("ClubPage Render - isAuthenticated:", isAuthenticated);
     console.log("ClubPage Render - user:", user);
@@ -31,7 +31,7 @@ const ClubPage = () => {
   }, [isAuthenticated, user, authLoading, allClubs.length, myClubs.length, clubsLoading, error]);
 
 
-  // Effect to ensure session is checked on load (redundant if in App.js, but harmless)
+  // Effect to ensure session is checked on load 
   useEffect(() => {
     if (!isAuthenticated && !authLoading && !user) {
       console.log("ClubPage: Dispatching checkSession on initial load.");
@@ -118,7 +118,7 @@ const ClubPage = () => {
   return (
     <div className="club-page">
       <div className="feed-welcome-box">
-        <h1 className="text-xl font-bold mb-2">🎬 Join a Club</h1> 
+        <h1 className="text-xl font-bold mb-2">Join a Club</h1> 
         <p className="text-gray-300">Find a community that shares your taste in TV shows and movies!</p>
       </div>
 
@@ -127,7 +127,7 @@ const ClubPage = () => {
 
       {isAuthenticated && myClubs.length > 0 ? (
         <div className="my-clubs-section mt-8">
-          <h2 className="text-lg font-semibold mb-3">📂 My Clubs</h2>
+          <h2 className="text-lg font-semibold mb-3">My Clubs</h2> 
           <div className="club-grid">
             {myClubs.map((club) => (
               <ClubCard key={club.id} club={club} isJoined={true} />
@@ -142,7 +142,7 @@ const ClubPage = () => {
       )}
 
       <div className="all-clubs-section mt-8">
-        <h2 className="text-lg font-semibold mb-3">🌐 Explore All Clubs</h2>
+        <h2 className="text-lg font-semibold mb-3">Explore All Clubs</h2> 
         <div className="club-grid">
           {clubsLoading && <p className="text-blue-400 text-center">Loading clubs to explore...</p>}
           {allClubs.length > 0 ? (
