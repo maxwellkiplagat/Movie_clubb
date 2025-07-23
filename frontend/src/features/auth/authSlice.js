@@ -29,8 +29,8 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (userData, { rejectWithValue }) => {
     try {
-      console.log("loginUser Thunk: Attempting to log in."); 
-      console.log("loginUser Thunk: User data:", userData); 
+      console.log("loginUser Thunk: Attempting to log in.");
+      console.log("loginUser Thunk: User data:", userData);
       console.log("loginUser Thunk: API URL:", `${API_URL}/auth/login`);
 
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -40,8 +40,8 @@ export const loginUser = createAsyncThunk(
       });
 
       const data = await response.json();
-      console.log("loginUser Thunk: Response data:", data); 
-      console.log("loginUser Thunk: Response OK:", response.ok); 
+      console.log("loginUser Thunk: Response data:", data);
+      console.log("loginUser Thunk: Response OK:", response.ok);
 
       if (!response.ok) {
         return rejectWithValue(data.message || 'Login failed');
@@ -49,11 +49,12 @@ export const loginUser = createAsyncThunk(
 
       if (data.access_token) {
         localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('user', JSON.stringify({ id: data.user_id, username: data.username }));
       }
 
-      return { ...data, id: data.user_id }; 
+      return { ...data, id: data.user_id };
     } catch (error) {
-      console.error("loginUser Thunk: Catch block error:", error); 
+      console.error("loginUser Thunk: Catch block error:", error);
       return rejectWithValue(error.message || 'Network error during login');
     }
   }
@@ -75,12 +76,14 @@ export const checkSession = createAsyncThunk(
 
       if (!response.ok) {
         localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
         return rejectWithValue(data.message || 'Session invalid');
       }
 
-      return { ...data, id: data.user_id }; 
+      return { ...data, id: data.user_id };
     } catch (error) {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
       return rejectWithValue(error.message || 'Network error during session check');
     }
   }
@@ -98,6 +101,7 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -105,6 +109,11 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    syncAuth: (state, action) => {
+      state.user = action.payload?.user || null;
+      state.token = action.payload?.token || null;
+      state.isAuthenticated = !!action.payload?.token;
     },
   },
   extraReducers: (builder) => {
@@ -127,7 +136,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload; 
+        state.user = action.payload;
         state.token = action.payload.access_token;
         state.isAuthenticated = true;
       })
@@ -145,7 +154,7 @@ const authSlice = createSlice({
       })
       .addCase(checkSession.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload; 
+        state.user = action.payload;
         state.token = localStorage.getItem('access_token');
         state.isAuthenticated = true;
       })
@@ -159,5 +168,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, syncAuth } = authSlice.actions;
 export default authSlice.reducer;
