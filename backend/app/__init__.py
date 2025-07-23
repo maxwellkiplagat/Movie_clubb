@@ -20,7 +20,6 @@ migrate = Migrate()
 cors = CORS()
 
 def create_app():
-
     # Create and configure the Flask application
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
@@ -29,14 +28,15 @@ def create_app():
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
-# Initialize extensions with the app
+    # Initialize extensions with the app
     db.init_app(app)
     api.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
-# Import models to ensure they are registered with SQLAlchemy
+
+    # Import models to ensure they are registered with SQLAlchemy
     from .models.user import User
     from .models.club import Club
     from .models.movie import Movie
@@ -46,7 +46,7 @@ def create_app():
     from .models.follow import Follow
     from .models.club_member import ClubMember 
 
-# Register error handlers
+    # Register error handlers
     @app.errorhandler(404)
     def not_found(error):
         return make_response(jsonify({'errors': ['Not Found']}), 404)
@@ -55,9 +55,12 @@ def create_app():
     def bad_request(error):
         return make_response(jsonify({'errors': ['Bad Request']}), 400)
 
+    # Generic Exception Handler
     @app.errorhandler(Exception)
     def handle_exception(e):
         db.session.rollback()
+        # In debug mode, Flask will still show the traceback in the console.
+        # In production, this provides a clean 500 error.
         return make_response(jsonify({'message': f'Unexpected error: {str(e)}'}), 500)
 
     @app.route('/')
@@ -84,4 +87,3 @@ def create_app():
     app.register_blueprint(movie_bp, url_prefix='/movies')
 
     return app
-

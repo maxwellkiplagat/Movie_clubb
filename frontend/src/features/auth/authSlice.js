@@ -86,6 +86,68 @@ export const checkSession = createAsyncThunk(
   }
 );
 
+//  Fetch User Profile
+export const fetchUserProfile = createAsyncThunk(
+  'auth/fetchUserProfile',
+  async (userId, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token;
+      if (!token) {
+        return rejectWithValue('Authentication required to fetch profile.');
+      }
+
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.message || 'Failed to fetch user profile');
+      }
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Network error fetching user profile');
+    }
+  }
+);
+
+// Update User Profile
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateUserProfile',
+  async ({ userId, userData }, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token;
+      if (!token) {
+        return rejectWithValue('Authentication required to update profile.');
+      }
+
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.message || 'Failed to update user profile');
+      }
+      return data; // Return the updated user data
+    } catch (error) {
+      return rejectWithValue(error.message || 'Network error updating user profile');
+    }
+  }
+);
+
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -106,6 +168,10 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    // Reducer to directly set user data
+    setUser: (state, action) => {
+      state.user = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -155,9 +221,37 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+      })
+
+      // NEW: Cases for fetchUserProfile
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload; // Update user with fresh profile data
+      })
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+      // NEW: Cases for updateUserProfile
+      .addCase(updateUserProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload; 
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       });
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, setUser } = authSlice.actions; 
 export default authSlice.reducer;
