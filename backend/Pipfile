@@ -10,11 +10,11 @@ psycopg2-binary = "*"
 python-dotenv = "*"
 flask-restful = "*"
 flask-jwt-extended = "*"
-sqlalchemy-serializer = "*"
 faker = "*"
 flask-cors = "*"
-flask-bcrypt = "*"
 flask-migrate = "*"
+flask-bcrypt = "*"
+sqlalchemy-serializer = "*"
 
 [dev-packages]
 
