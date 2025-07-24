@@ -14,10 +14,11 @@ const ClubPage = () => {
   const dispatch = useDispatch(); 
   const navigate = useNavigate();
 
-  // Selectors to get auth and clubs state
+  // Selectors to get auth and clubs state, now with specific loading states
   const { isAuthenticated, user, isLoading: authLoading } = useSelector((state) => state.auth);
-  const { allClubs, myClubs, isLoading: clubsLoading, error } = useSelector((state) => state.clubs);
+  const { allClubs, myClubs, isAllClubsLoading, isMyClubsLoading, error } = useSelector((state) => state.clubs); 
   const [message, setMessage] = useState(null);
+  const [hasFetchedMyClubs, setHasFetchedMyClubs] = useState(false); // To prevent re-fetching myClubs endlessly if empty
 
   // Effect to log state changes for debugging
   useEffect(() => {
@@ -27,14 +28,15 @@ const ClubPage = () => {
     console.log("ClubPage Render - authLoading:", authLoading);
     console.log("ClubPage Render - allClubs count:", allClubs.length);
     console.log("ClubPage Render - myClubs count:", myClubs.length);
-    console.log("ClubPage Render - clubsLoading:", clubsLoading);
+    console.log("ClubPage Render - isAllClubsLoading:", isAllClubsLoading); 
+    console.log("ClubPage Render - isMyClubsLoading:", isMyClubsLoading);   
     console.log("ClubPage Render - error:", error);
-  }, [isAuthenticated, user, authLoading, allClubs.length, myClubs.length, clubsLoading, error]);
+    console.log("ClubPage Render - hasFetchedMyClubs:", hasFetchedMyClubs); 
+  }, [isAuthenticated, user, authLoading, allClubs.length, myClubs.length, isAllClubsLoading, isMyClubsLoading, error, hasFetchedMyClubs]);
 
 
   // Effect to ensure session is checked on load 
   useEffect(() => {
-    // Only dispatch checkSession if not authenticated AND not already loading auth AND user is null
     if (!isAuthenticated && !authLoading && !user) {
       console.log("ClubPage: Dispatching checkSession on initial load.");
       dispatch(checkSession());
@@ -46,29 +48,35 @@ const ClubPage = () => {
     dispatch(clearClubError()); 
 
     // Condition for fetching ALL clubs
-    // Only fetch if allClubs is empty AND not currently loading
-    if (allClubs.length === 0 && !clubsLoading) {
+    // Only fetch if allClubs is empty AND not currently loading ALL clubs
+    if (allClubs.length === 0 && !isAllClubsLoading) { 
       console.log("ClubPage useEffect: Dispatching fetchAllClubs (conditional).");
       dispatch(fetchAllClubs());
     } else {
-      console.log(`ClubPage useEffect: Not dispatching fetchAllClubs. allClubs.length: ${allClubs.length}, clubsLoading: ${clubsLoading}`);
+      console.log(`ClubPage useEffect: Not dispatching fetchAllClubs. allClubs.length: ${allClubs.length}, isAllClubsLoading: ${isAllClubsLoading}`);
     }
 
     // Condition for fetching MY clubs
-    // Only fetch if authenticated AND user ID is available AND myClubs is empty AND not currently loading
-    if (isAuthenticated && user?.id && myClubs.length === 0 && !clubsLoading) {
+    // Only fetch if authenticated AND user ID is available AND myClubs is empty AND not currently loading MY clubs AND we haven't already attempted to fetch my clubs
+    if (isAuthenticated && user?.id && myClubs.length === 0 && !isMyClubsLoading && !hasFetchedMyClubs) { // MODIFIED CONDITION
       console.log("ClubPage useEffect: Dispatching fetchMyClubs (conditional) for user ID:", user.id);
       dispatch(fetchMyClubs());
+      setHasFetchedMyClubs(true); // Set flag after dispatch
     } else if (!isAuthenticated && !authLoading) {
       // If not authenticated and not loading auth, ensure myClubs state is cleared if not already empty.
-      // This prevents unnecessary dispatches if myClubs is already empty.
       if (myClubs.length > 0) {
         console.log("ClubPage useEffect: Not authenticated or auth loading, clearing myClubs state (conditional).");
         dispatch({ type: 'clubs/fetchMyClubs/fulfilled', payload: [] });
       }
+      if (hasFetchedMyClubs) { // Reset flag on logout
+          console.log("ClubPage useEffect: Not authenticated, resetting hasFetchedMyClubs flag.");
+          setHasFetchedMyClubs(false);
+      }
+    } else {
+        console.log(`ClubPage useEffect: Not dispatching fetchMyClubs. isAuthenticated: ${isAuthenticated}, user?.id: ${user?.id}, myClubs.length: ${myClubs.length}, isMyClubsLoading: ${isMyClubsLoading}, hasFetchedMyClubs: ${hasFetchedMyClubs}`);
     }
   
-  }, [dispatch, isAuthenticated, user?.id, clubsLoading]); // Removed allClubs.length, myClubs.length from dependencies
+  }, [dispatch, isAuthenticated, user?.id, isAllClubsLoading, isMyClubsLoading, allClubs.length, myClubs.length, hasFetchedMyClubs, authLoading]); // Added hasFetchedMyClubs and authLoading to dependencies
 
 
   // Effect to handle pending club join after login
@@ -91,7 +99,7 @@ const ClubPage = () => {
           });
       }
     }
-  }, [isAuthenticated, user?.id, dispatch]);
+  }, [isAuthenticated, user?.id, dispatch, authLoading]); // ADDED authLoading to dependencies
 
   // Effect to display Redux errors
   useEffect(() => {
@@ -139,7 +147,7 @@ const ClubPage = () => {
         <p className="text-gray-300">Find a community that shares your taste in TV shows and movies!</p>
       </div>
 
-      {(authLoading || clubsLoading) && <p className="text-blue-400 text-center">Loading clubs...</p>}
+      {(authLoading || isAllClubsLoading || isMyClubsLoading) && <p className="text-blue-400 text-center">Loading clubs...</p>} 
       {message && <p className="error text-red-500 text-center">{message}</p>} 
 
       {isAuthenticated && myClubs.length > 0 ? (
@@ -153,7 +161,7 @@ const ClubPage = () => {
         </div>
       ) : (
         // Display a message if no clubs are joined and not loading
-        !clubsLoading && !authLoading && isAuthenticated && myClubs.length === 0 && (
+        !isMyClubsLoading && !authLoading && isAuthenticated && myClubs.length === 0 && ( 
           <p className="text-gray-400 text-center mt-4">You haven't joined any clubs yet. Explore below!</p>
         )
       )}
@@ -161,13 +169,13 @@ const ClubPage = () => {
       <div className="all-clubs-section mt-8">
         <h2 className="text-xl font-semibold mb-4 text-orange-400">Explore All Clubs</h2> 
         <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> 
-          {clubsLoading && <p className="text-blue-400 text-center">Loading clubs to explore...</p>}
+          {isAllClubsLoading && <p className="text-blue-400 text-center">Loading clubs to explore...</p>} 
           {allClubs.length > 0 ? (
             availableClubs.map((club) => (
               <ClubCard key={club.id} club={club} onJoin={() => handleJoin(club.id)} />
             ))
           ) : (
-            !clubsLoading && <p className="text-gray-400 text-center">No clubs available to explore.</p>
+            !isAllClubsLoading && <p className="text-gray-400 text-center">No clubs available to explore.</p> 
           )}
         </div>
       </div>

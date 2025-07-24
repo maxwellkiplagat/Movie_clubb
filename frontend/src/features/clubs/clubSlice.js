@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { logout } from '../auth/authSlice'; // CORRECTED: Import logout action
 
 const API_URL = 'http://127.0.0.1:5000';
 
@@ -132,7 +133,9 @@ const clubSlice = createSlice({
     allClubs: [],
     myClubs: [],
     currentClubPosts: [],
-    isLoading: false,
+    isAllClubsLoading: false, 
+    isMyClubsLoading: false,  
+    isLoading: false,         
     error: null,
     postCreationStatus: 'idle', 
     postCreationError: null,
@@ -150,54 +153,66 @@ const clubSlice = createSlice({
     clearPostCreationError: (state) => { 
       state.postCreationError = null;
     },
+    // Reducer to manually clear all club data (useful on logout)
+    resetClubState: (state) => {
+      state.allClubs = [];
+      state.myClubs = [];
+      state.currentClubPosts = [];
+      state.isAllClubsLoading = false;
+      state.isMyClubsLoading = false;
+      state.isLoading = false;
+      state.error = null;
+      state.postCreationStatus = 'idle';
+      state.postCreationError = null;
+    }
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchAllClubs.pending, (state) => {
-        state.isLoading = true;
+        state.isAllClubsLoading = true; 
         state.error = null;
       })
       .addCase(fetchAllClubs.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isAllClubsLoading = false; 
         state.allClubs = action.payload;
       })
       .addCase(fetchAllClubs.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isAllClubsLoading = false; 
         state.error = action.payload;
       })
       .addCase(fetchMyClubs.pending, (state) => {
-        state.isLoading = true;
+        state.isMyClubsLoading = true; 
         state.error = null;
       })
       .addCase(fetchMyClubs.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isMyClubsLoading = false; 
         state.myClubs = action.payload;
       })
       .addCase(fetchMyClubs.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isMyClubsLoading = false; 
         state.error = action.payload;
       })
       .addCase(joinClub.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true; 
         state.error = null;
       })
       .addCase(joinClub.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; 
       })
       .addCase(joinClub.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; 
         state.error = action.payload;
       })
       .addCase(fetchClubPosts.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true; 
         state.error = null;
       })
       .addCase(fetchClubPosts.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; 
         state.currentClubPosts = action.payload;
       })
       .addCase(fetchClubPosts.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; 
         state.error = action.payload;
       })
       .addCase(createPost.pending, (state) => {
@@ -210,9 +225,22 @@ const clubSlice = createSlice({
       .addCase(createPost.rejected, (state, action) => {
         state.postCreationStatus = 'failed';
         state.postCreationError = action.payload;
+      })
+      //  Clear club state when user logs out
+      .addCase(logout, (state) => { //Listen for the logout action directly
+        console.log("clubSlice: Handling logout, resetting club state.");
+        state.allClubs = [];
+        state.myClubs = [];
+        state.currentClubPosts = [];
+        state.isAllClubsLoading = false;
+        state.isMyClubsLoading = false;
+        state.isLoading = false;
+        state.error = null;
+        state.postCreationStatus = 'idle';
+        state.postCreationError = null;
       });
   },
 });
 
-export const { clearClubError, clearCurrentClubPosts, setPostCreationStatus, clearPostCreationError } = clubSlice.actions;
+export const { clearClubError, clearCurrentClubPosts, setPostCreationStatus, clearPostCreationError, resetClubState } = clubSlice.actions;
 export default clubSlice.reducer;

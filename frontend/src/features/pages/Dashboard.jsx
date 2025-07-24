@@ -21,7 +21,7 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
       email: user?.email || '',
       password: '', // Always clear password field on user change/modal open
     });
-  }, [user?.id]); // Depend only on user.id, not the entire user object
+  }, [user?.id, user?.username, user?.email]); // ADDED user?.username, user?.email to dependencies
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -107,21 +107,34 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { user, isAuthenticated, isLoading, error } = useSelector((state) => state.auth);
-  const { myClubs, isLoading: clubsLoading, error: clubsError } = useSelector((state) => state.clubs); 
+  const { user, isAuthenticated, isLoading, error: authError } = useSelector((state) => state.auth); 
+  const { myClubs, isMyClubsLoading, error: clubsError } = useSelector((state) => state.clubs); 
   
   const [showEditModal, setShowEditModal] = useState(false);
+  const [hasFetchedDashboardClubs, setHasFetchedDashboardClubs] = useState(false); // NEW STATE for Dashboard clubs
 
   // Debugging logs for Dashboard render
   useEffect(() => {
     console.log("Dashboard Render - user state:", user);
     console.log("Dashboard Render - isAuthenticated:", isAuthenticated);
     console.log("Dashboard Render - auth isLoading:", isLoading);
-    console.log("Dashboard Render - auth error:", error);
+    console.log("Dashboard Render - auth error:", authError);
     console.log("Dashboard Render - myClubs count:", myClubs ? myClubs.length : 0);
-  }, [user, isAuthenticated, isLoading, error, myClubs]);
+    console.log("Dashboard Render - isMyClubsLoading:", isMyClubsLoading); 
+    console.log("Dashboard Render - hasFetchedDashboardClubs:", hasFetchedDashboardClubs); // NEW LOG
+  }, [user, isAuthenticated, isLoading, authError, myClubs, isMyClubsLoading, hasFetchedDashboardClubs]); // Added hasFetchedDashboardClubs to dependencies
+
+  // Main effect for fetching user profile and clubs
   useEffect(() => {
     console.log("Dashboard useEffect (fetch): Checking conditions for fetching data.");
+    console.log("  isAuthenticated:", isAuthenticated);
+    console.log("  user?.id:", user?.id);
+    console.log("  user?.username:", user?.username);
+    console.log("  user?.email:", user?.email);
+    console.log("  isMyClubsLoading:", isMyClubsLoading);
+    console.log("  myClubs?.length:", myClubs?.length);
+    console.log("  hasFetchedDashboardClubs:", hasFetchedDashboardClubs); // NEW LOG
+
     // Only proceed if authenticated and user ID is available
     if (isAuthenticated && user?.id) { 
         // Fetch user profile only if it's not already fully populated
@@ -131,15 +144,24 @@ const Dashboard = () => {
             dispatch(fetchUserProfile(user.id));
         }
 
-        if (!clubsLoading && (!myClubs || myClubs.length === 0)) {
+        // Fetch myClubs only if not loading, myClubs is empty, AND we haven't already attempted to fetch them for the dashboard
+        if (!isMyClubsLoading && (!myClubs || myClubs?.length === 0) && !hasFetchedDashboardClubs) { // MODIFIED CONDITION
             console.log("Dashboard useEffect: User authenticated and myClubs not populated, dispatching fetchMyClubs.");
             dispatch(fetchMyClubs());
+            setHasFetchedDashboardClubs(true); // Set flag after dispatch
+        } else {
+            console.log(`Dashboard useEffect: Not dispatching fetchMyClubs. isMyClubsLoading: ${isMyClubsLoading}, myClubs.length: ${myClubs?.length}, hasFetchedDashboardClubs: ${hasFetchedDashboardClubs}`);
         }
     } else if (!isAuthenticated) {
         console.log("Dashboard useEffect: Not authenticated. User profile and clubs will not be fetched.");
+        // Reset flag if user logs out
+        if (hasFetchedDashboardClubs) {
+            console.log("Dashboard useEffect: Not authenticated, resetting hasFetchedDashboardClubs flag.");
+            setHasFetchedDashboardClubs(false);
+        }
     }
- // Cleanup function to avoid memory leaks
-  }, [isAuthenticated, user?.id, dispatch, clubsLoading]); 
+  // All dependencies for the conditions above must be included here
+  }, [isAuthenticated, user?.id, dispatch, isMyClubsLoading, myClubs?.length, user?.username, user?.email, hasFetchedDashboardClubs]); // ADDED hasFetchedDashboardClubs
 
 
   // Handle profile save
@@ -189,12 +211,27 @@ const Dashboard = () => {
   
 
 // Conditional rendering based on authentication and loading state
-  if (isAuthenticated && (!user?.id || !user?.username || !user?.email || clubsLoading)) { 
-    return <p className="text-blue-400 text-center mt-8">Loading user profile and clubs...</p>;
+  // Combined loading checks for a cleaner initial render state
+  if (!user?.id || isLoading || isMyClubsLoading || !isAuthenticated) { 
+    return (
+      <div className="dashboard-loading p-6 bg-gray-900 min-h-screen text-white flex items-center justify-center">
+        <p className="text-blue-400 text-xl">Loading user profile and clubs...</p>
+      </div>
+    );
   }
-  if (!isAuthenticated) {
-    return <p className="text-red-500 text-center mt-8">Please log in to view your dashboard.</p>;
+  
+  // Show error state if any
+  if (authError || clubsError) { 
+    return (
+      <div className="dashboard-error p-6 bg-gray-900 min-h-screen text-red-500 text-center">
+        <p>Error loading dashboard: {authError || clubsError}</p>
+        <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">
+          Retry
+        </button>
+      </div>
+    );
   }
+
 
   return (
     <div className="dashboard-container p-6 bg-gray-900 min-h-screen text-white">
@@ -229,7 +266,7 @@ const Dashboard = () => {
           onClose={handleCloseModal} 
           onSave={handleSaveProfile}
           isLoading={isLoading}
-          error={error}
+          error={authError} 
         />
       )}
 
@@ -300,7 +337,8 @@ const Dashboard = () => {
         )}
       </div>
 
-     
+      
+      
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Followers</h2>
         {followers.length === 0 ? (
