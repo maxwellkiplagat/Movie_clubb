@@ -3,20 +3,19 @@ import { logout } from '../auth/authSlice';
 
 const API_URL = 'http://127.0.0.1:5000';
 
+// Async Thunks
 export const fetchAllClubs = createAsyncThunk(
   'clubs/fetchAllClubs',
   async (_, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
       const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const response = await fetch(`${API_URL}/clubs/`, { headers }); 
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_URL}/clubs/`, { headers });
       const data = await response.json();
-      if (!response.ok) {
-        return rejectWithValue(data.message || 'Failed to fetch clubs');
-      }
+
+      if (!response.ok) return rejectWithValue(data.message || 'Failed to fetch clubs');
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error fetching clubs');
@@ -29,10 +28,9 @@ export const fetchMyClubs = createAsyncThunk(
   async (_, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
-      const userId = getState().auth.user?.id; // Ensure user.id is correctly retrieved
+      const userId = getState().auth.user?.id; 
       if (!token || !userId) {
-        // If no token or user ID, we can't fetch user-specific clubs.
-        // Returning a rejection here is correct.
+        // Keeping Ian's more descriptive message
         return rejectWithValue('User not authenticated or ID missing. Cannot fetch user clubs.');
       }
       const response = await fetch(`${API_URL}/users/${userId}/clubs`, {
@@ -43,9 +41,7 @@ export const fetchMyClubs = createAsyncThunk(
         },
       });
       const data = await response.json();
-      if (!response.ok) {
-        return rejectWithValue(data.message || 'Failed to fetch my clubs');
-      }
+      if (!response.ok) return rejectWithValue(data.message || 'Failed to fetch my clubs');
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error fetching my clubs');
@@ -58,24 +54,45 @@ export const joinClub = createAsyncThunk(
   async (clubId, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
-      if (!token) {
-        return rejectWithValue('Authentication required to join a club.');
-      }
+      if (!token) return rejectWithValue('Authentication required to join a club.');
+
       const response = await fetch(`${API_URL}/clubs/${clubId}/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({}), 
+        body: JSON.stringify({}),
       });
       const data = await response.json();
-      if (!response.ok) {
-        return rejectWithValue(data.message || 'Failed to join club');
-      }
+      if (!response.ok) return rejectWithValue(data.message || 'Failed to join club');
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error joining club');
+    }
+  }
+);
+
+// Max's new feature: leaveClub thunk - INTEGRATED
+export const leaveClub = createAsyncThunk(
+  'clubs/leaveClub',
+  async (clubId, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token;
+      if (!token) return rejectWithValue('Authentication required to leave a club.');
+
+      const response = await fetch(`${API_URL}/clubs/${clubId}/leave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) return rejectWithValue(data.message || 'Failed to leave club');
+      return clubId; // Return clubId to filter it out from myClubs state
+    } catch (error) {
+      return rejectWithValue(error.message || 'Network error leaving club');
     }
   }
 );
@@ -86,14 +103,11 @@ export const fetchClubPosts = createAsyncThunk(
     try {
       const token = getState().auth.token;
       const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const response = await fetch(`${API_URL}/posts/clubs/${clubId}/posts`, { headers });
       const data = await response.json();
-      if (!response.ok) {
-        return rejectWithValue(data.message || 'Failed to fetch club posts');
-      }
+      if (!response.ok) return rejectWithValue(data.message || 'Failed to fetch club posts');
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error fetching club posts');
@@ -106,9 +120,8 @@ export const createPost = createAsyncThunk(
   async ({ clubId, movie_title, content }, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
-      if (!token) {
-        return rejectWithValue('Authentication required to create a post.');
-      }
+      if (!token) return rejectWithValue('Authentication required to create a post.');
+
       const response = await fetch(`${API_URL}/posts/clubs/${clubId}/posts`, {
         method: 'POST',
         headers: {
@@ -118,9 +131,7 @@ export const createPost = createAsyncThunk(
         body: JSON.stringify({ movie_title, content }),
       });
       const data = await response.json();
-      if (!response.ok) {
-        return rejectWithValue(data.message || 'Failed to create post');
-      }
+      if (!response.ok) return rejectWithValue(data.message || 'Failed to create post');
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error creating post');
@@ -128,18 +139,18 @@ export const createPost = createAsyncThunk(
   }
 );
 
-
+// Slice
 const clubSlice = createSlice({
   name: 'clubs',
   initialState: {
     allClubs: [],
     myClubs: [],
     currentClubPosts: [],
-    isAllClubsLoading: false, // Confirmed
-    isMyClubsLoading: false,  // Confirmed
+    isAllClubsLoading: false, 
+    isMyClubsLoading: false,  
     isLoading: false,         
     error: null,
-    postCreationStatus: 'idle', 
+    postCreationStatus: 'idle',
     postCreationError: null,
   },
   reducers: {
@@ -149,13 +160,13 @@ const clubSlice = createSlice({
     clearCurrentClubPosts: (state) => {
       state.currentClubPosts = [];
     },
-    setPostCreationStatus: (state, action) => { 
+    setPostCreationStatus: (state, action) => {
       state.postCreationStatus = action.payload;
     },
-    clearPostCreationError: (state) => { 
+    clearPostCreationError: (state) => {
       state.postCreationError = null;
     },
-    resetClubState: (state) => {
+    resetClubState: (state) => { // Keep resetClubState
       state.allClubs = [];
       state.myClubs = [];
       state.currentClubPosts = [];
@@ -197,11 +208,24 @@ const clubSlice = createSlice({
         state.isLoading = true; 
         state.error = null;
       })
-      .addCase(joinClub.fulfilled, (state, action) => {
+      .addCase(joinClub.fulfilled, (state, action) => { // Keep action parameter for consistency
         state.isLoading = false; 
       })
       .addCase(joinClub.rejected, (state, action) => {
         state.isLoading = false; 
+        state.error = action.payload;
+      })
+      // Max's new feature: leaveClub extraReducer - INTEGRATED
+      .addCase(leaveClub.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(leaveClub.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.myClubs = state.myClubs.filter(club => club.id !== action.payload); // Remove left club
+      })
+      .addCase(leaveClub.rejected, (state, action) => {
+        state.isLoading = false;
         state.error = action.payload;
       })
       .addCase(fetchClubPosts.pending, (state) => {
@@ -220,7 +244,7 @@ const clubSlice = createSlice({
         state.postCreationStatus = 'pending';
         state.postCreationError = null;
       })
-      .addCase(createPost.fulfilled, (state, action) => {
+      .addCase(createPost.fulfilled, (state) => {
         state.postCreationStatus = 'succeeded';
       })
       .addCase(createPost.rejected, (state, action) => {
@@ -242,5 +266,13 @@ const clubSlice = createSlice({
   },
 });
 
-export const { clearClubError, clearCurrentClubPosts, setPostCreationStatus, clearPostCreationError, resetClubState } = clubSlice.actions;
+// Combine exports, ensuring resetClubState is included
+export const { 
+  clearClubError, 
+  clearCurrentClubPosts, 
+  setPostCreationStatus, 
+  clearPostCreationError, 
+  resetClubState // Ensure this is exported
+} = clubSlice.actions;
+
 export default clubSlice.reducer;

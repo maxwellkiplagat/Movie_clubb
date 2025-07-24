@@ -21,7 +21,6 @@ const Navbar = () => {
       <ul>
         <li><Link to="/feed">Feed</Link></li>
         <li><Link to="/clubs">Clubs</Link></li>
-        <li><Link to="/tracker">My Tracker</Link></li>
         <li><Link to="/watchlist">Watchlist</Link></li>
 
         {isAuthenticated && (

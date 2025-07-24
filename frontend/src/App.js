@@ -6,7 +6,6 @@ import Login from './features/pages/Login';
 import Register from './features/pages/Register';
 import Feed from './features/pages/Feed';
 import ClubPage from './features/pages/ClubPage';
-import MovieTracker from './features/pages/MovieTracker';
 import Watchlist from './features/pages/Watchlist';
 import Dashboard from './features/pages/Dashboard';
 import PrivateRoute from './components/PrivateRoute';
@@ -55,15 +54,6 @@ function App() {
           element={
             <PrivateRoute>
               <CreatePostInClub />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/tracker"
-          element={
-            <PrivateRoute>
-              <MovieTracker />
             </PrivateRoute>
           }
         />
