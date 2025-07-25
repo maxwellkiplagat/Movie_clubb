@@ -1,24 +1,88 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+// src/features/pages/Watchlist.jsx
+
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { addToWatchlist, removeFromWatchlist, toggleWatchedStatus } from '../Watchlist/watchlistSlice.js';
+import '../../styles.css';
 
 const Watchlist = () => {
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const watchlist = useSelector((state) => state.watchlist.movies);
+
+  // Local state for input form
+  const [title, setTitle] = useState('');
+  const [genre, setGenre] = useState('');
+  const [status, setStatus] = useState('plan'); // plan or watched
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+
+    if (!title.trim()) return;
+
+    const newMovie = {
+      id: Date.now(),
+      title,
+      genre,
+      status,
+    };
+
+    dispatch(addToWatchlist(newMovie));
+
+    // Clear form
+    setTitle('');
+    setGenre('');
+    setStatus('plan');
+  };
 
   return (
-    <div className="watchlist-page">
-      {isAuthenticated ? (
-        <div className="watchlist-content">
-          <h2>Your Watchlist</h2>
-          <p>Here’s where your saved movies and shows will appear.</p>
-          {/* You can map through your saved items here later */}
-        </div>
-      ) : (
-        <div className="watchlist-content">
-          <h2>Please log in to access your watchlist</h2>
-          <Link to="/login" className="login-link">Go to Login</Link>
-        </div>
-      )}
+    <div className="page-container">
+      <h2 className="watchlist-title">🎬 My Watchlist</h2>
+
+      <form onSubmit={handleAdd} className="watchlist-form">
+        <input
+          type="text"
+          placeholder="Movie title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="watchlist-input"
+        />
+        <input
+          type="text"
+          placeholder="Genre"
+          value={genre}
+          onChange={(e) => setGenre(e.target.value)}
+          className="watchlist-input"
+        />
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="watchlist-input"
+        >
+          <option value="plan">Plan to Watch</option>
+          <option value="watched">Watched</option>
+        </select>
+        <button type="submit" className="watchlist-button">
+          ➕ Add Movie
+        </button>
+      </form>
+
+      <ul className="watchlist-list">
+        {watchlist.map((movie) => (
+          <li key={movie.id} className="watchlist-item">
+            <span className="watchlist-title">
+              {movie.title} ({movie.genre}) - {movie.status === 'watched' ? '✅ Watched' : '📌 Plan'}
+            </span>
+            <div className="watchlist-actions">
+              <button onClick={() => dispatch(toggleWatchedStatus(movie.id))}>
+                🔁 Toggle
+              </button>
+              <button onClick={() => dispatch(removeFromWatchlist(movie.id))}>
+                ❌ Remove
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

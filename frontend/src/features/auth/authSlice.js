@@ -6,6 +6,7 @@ export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async (userData, { rejectWithValue }) => {
     try {
+      // Fixed template literal syntax
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,6 +32,7 @@ export const loginUser = createAsyncThunk(
     try {
       console.log("loginUser Thunk: Attempting to log in."); 
       console.log("loginUser Thunk: User data:", userData); 
+      // Fixed template literal syntax
       console.log("loginUser Thunk: API URL:", `${API_URL}/auth/login`);
 
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -47,9 +49,10 @@ export const loginUser = createAsyncThunk(
         return rejectWithValue(data.message || 'Login failed');
       }
 
-      // Use 'jwt_token' consistently for localStorage
+      // Keep 'jwt_token' consistently
       if (data.access_token) {
         localStorage.setItem('jwt_token', data.access_token);
+        // Removed localStorage.setItem('user', ...) as Redux state manages user
       }
 
       // Ensure 'id' is always present in the user object
@@ -69,6 +72,7 @@ export const checkSession = createAsyncThunk(
       const token = localStorage.getItem('jwt_token');
       if (!token) return rejectWithValue('No token found');
 
+      // Fixed template literal syntax
       const response = await fetch(`${API_URL}/auth/check_session`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` },
@@ -78,6 +82,7 @@ export const checkSession = createAsyncThunk(
 
       if (!response.ok) {
         localStorage.removeItem('jwt_token'); // Use 'jwt_token'
+        // Removed localStorage.removeItem('user'); as Redux state manages user
         return rejectWithValue(data.message || 'Session invalid');
       }
 
@@ -85,6 +90,7 @@ export const checkSession = createAsyncThunk(
       return { ...data, id: data.user_id }; 
     } catch (error) {
       localStorage.removeItem('jwt_token'); // Use 'jwt_token'
+      // Removed localStorage.removeItem('user'); as Redux state manages user
       return rejectWithValue(error.message || 'Network error during session check');
     }
   }
@@ -164,11 +170,12 @@ export const fetchUserPosts = createAsyncThunk(
       if (!token) {
         return rejectWithValue('Authentication token missing.');
       }
+      // Fixed template literal syntax
       const response = await fetch(`${API_URL}/users/${userId}/posts`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Fixed template literal syntax
         },
       });
       const data = await response.json();
@@ -181,7 +188,6 @@ export const fetchUserPosts = createAsyncThunk(
     }
   }
 );
-
 
 const authSlice = createSlice({
   name: 'auth',
@@ -197,7 +203,8 @@ const authSlice = createSlice({
   },
   reducers: {
     logout: (state) => {
-      localStorage.removeItem('jwt_token'); // Use 'jwt_token'
+      localStorage.removeItem('jwt_token'); // Use 'jwt_token' consistently
+      // Removed localStorage.removeItem('user'); as Redux state manages user
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -208,11 +215,12 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    // Reducer to directly set user data (ensuring ID consistency)
+    // Keep setUser reducer for direct user state updates, ensuring ID consistency
     setUser: (state, action) => {
       state.user = { ...action.payload, id: action.payload.user_id || action.payload.id };
       state.isAuthenticated = true;
     }
+    // Removed syncAuth as setUser covers its functionality and we don't need redundant sync
   },
   extraReducers: (builder) => {
     builder
@@ -255,7 +263,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         // Ensure 'id' is present in the user object
         state.user = { ...action.payload, id: action.payload.user_id }; 
-        state.token = localStorage.getItem('jwt_token'); // Use 'jwt_token'
+        state.token = localStorage.getItem('jwt_token'); // Use 'jwt_token' consistently
         state.isAuthenticated = true;
       })
       .addCase(checkSession.rejected, (state, action) => {
@@ -312,5 +320,6 @@ const authSlice = createSlice({
   },
 });
 
+// Export actions, keeping setUser and removing syncAuth
 export const { logout, clearError, setUser } = authSlice.actions; 
 export default authSlice.reducer;

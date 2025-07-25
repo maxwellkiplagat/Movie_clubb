@@ -1,15 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
-const ClubCard = ({ club, onJoin, isJoined }) => {
+const ClubCard = ({ club, onJoin = () => {}, onLeave = () => {}, isJoined }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    // If the club is already joined, clicking the card navigates to its details page
     if (isJoined) {
       navigate(`/clubs/${club.id}`);
     }
-    // If not joined, clicking the card does nothing, only the button handles joining
   };
 
   return (
@@ -33,14 +32,36 @@ const ClubCard = ({ club, onJoin, isJoined }) => {
       <p className="club-desc text-gray-300 text-sm mb-4 flex-grow">{club.description}</p>
 
       {isJoined ? (
-        <span className="joined-label bg-green-600 text-white text-sm px-4 py-1 rounded-full font-semibold">
-          ✓ Joined
-        </span>
+        <div className="flex flex-col items-center gap-2">
+          <span className="joined-label bg-green-600 text-white text-sm px-4 py-1 rounded-full font-semibold">
+            ✓ Joined
+          </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (typeof onLeave === 'function') {
+                onLeave();
+              }
+            }}
+            className="
+              leave-btn
+              bg-red-600 hover:bg-red-700
+              text-white text-sm font-bold
+              py-1 px-3 rounded-full
+              shadow-md transition duration-300 ease-in-out
+              transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75
+            "
+          >
+            Leave Club
+          </button>
+        </div>
       ) : (
         <button
           onClick={(e) => {
-            e.stopPropagation(); // Prevent the parent card's onClick from firing when button is clicked
-            onJoin(); 
+            e.stopPropagation();
+            if (typeof onJoin === 'function') {
+              onJoin();
+            }
           }}
           className="
             join-btn
@@ -56,6 +77,14 @@ const ClubCard = ({ club, onJoin, isJoined }) => {
       )}
     </div>
   );
+};
+
+// Optional: Add PropTypes for clarity and debugging
+ClubCard.propTypes = {
+  club: PropTypes.object.isRequired,
+  onJoin: PropTypes.func,
+  onLeave: PropTypes.func,
+  isJoined: PropTypes.bool.isRequired,
 };
 
 export default ClubCard;

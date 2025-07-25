@@ -7,19 +7,21 @@ import {
   fetchMyClubs, 
   joinClub,     
   clearClubError, 
+  leaveClub, // Keep Max's leaveClub thunk import
 } from '../clubs/clubSlice'; 
+// Removed checkSession import, as App.jsx handles it
 
 const ClubPage = () => {
   const dispatch = useDispatch(); 
   const navigate = useNavigate();
 
-  // Selectors to get auth and clubs state
+  // Selectors to get auth and clubs state - Keep granular loading states
   const { isAuthenticated, user, isLoading: authLoading } = useSelector((state) => state.auth);
   const { allClubs, myClubs, isAllClubsLoading, isMyClubsLoading, error } = useSelector((state) => state.clubs); 
   
   const [message, setMessage] = useState(null); 
   const [hasFetchedMyClubs, setHasFetchedMyClubs] = useState(false); 
-  // RE-ADDED STATE: hasAttemptedSessionCheck
+  // RE-INTRODUCED: hasAttemptedSessionCheck state
   const [hasAttemptedSessionCheck, setHasAttemptedSessionCheck] = useState(false); 
 
   // Effect to log state changes for debugging - KEEP ACTIVE
@@ -34,12 +36,13 @@ const ClubPage = () => {
     console.log("ClubPage Render - isMyClubsLoading:", isMyClubsLoading);   
     console.log("ClubPage Render - error:", error);
     console.log("ClubPage Render - hasFetchedMyClubs:", hasFetchedMyClubs); 
-    console.log("ClubPage Render - hasAttemptedSessionCheck:", hasAttemptedSessionCheck); // RE-ADDED LOG
-    console.log("ClubPage: Final styling and logic fix applied."); // New log
+    console.log("ClubPage Render - hasAttemptedSessionCheck:", hasAttemptedSessionCheck); 
+    console.log("ClubPage: Conflict resolved, final logic applied."); 
   }, [isAuthenticated, user, authLoading, allClubs.length, myClubs.length, isAllClubsLoading, isMyClubsLoading, error, hasFetchedMyClubs, hasAttemptedSessionCheck]);
 
 
-  // NEW/RE-ADDED USEEFFECT: To manage hasAttemptedSessionCheck based on global auth state
+  // RE-INTRODUCED USEEFFECT: To manage hasAttemptedSessionCheck based on global auth state
+  // This useEffect does NOT dispatch checkSession; it only reacts to auth state changes from App.jsx
   useEffect(() => {
     // If not authenticated, auth loading is false, and user is null (meaning checkSession completed and confirmed logout)
     // AND we haven't already marked that we've attempted a session check in this component's lifecycle
@@ -51,7 +54,6 @@ const ClubPage = () => {
         console.log("ClubPage: User became authenticated, resetting hasAttemptedSessionCheck flag.");
         setHasAttemptedSessionCheck(false);
     }
-    // No dispatch(checkSession()) here; App.jsx handles it globally.
   }, [isAuthenticated, authLoading, user, hasAttemptedSessionCheck]); 
 
 
@@ -59,7 +61,7 @@ const ClubPage = () => {
   useEffect(() => {
     dispatch(clearClubError()); 
 
-    // Condition for fetching ALL clubs
+    // Condition for fetching ALL clubs - Keep robust conditional logic
     if (allClubs.length === 0 && !isAllClubsLoading) { 
       console.log("ClubPage useEffect: Dispatching fetchAllClubs (conditional).");
       dispatch(fetchAllClubs());
@@ -67,8 +69,7 @@ const ClubPage = () => {
       console.log(`ClubPage useEffect: Not dispatching fetchAllClubs. allClubs.length: ${allClubs.length}, isAllClubsLoading: ${isAllClubsLoading}`);
     }
 
-    // Condition for fetching MY clubs - RE-ENABLED
-    // This will now rely on App.jsx's checkSession to populate isAuthenticated and user?.id
+    // Condition for fetching MY clubs - Keep robust conditional logic
     if (isAuthenticated && user?.id && myClubs.length === 0 && !isMyClubsLoading && !hasFetchedMyClubs) { 
       console.log("ClubPage useEffect: Dispatching fetchMyClubs (conditional) for user ID:", user.id);
       dispatch(fetchMyClubs());
@@ -89,7 +90,7 @@ const ClubPage = () => {
   }, [dispatch, isAuthenticated, user?.id, isAllClubsLoading, isMyClubsLoading, allClubs.length, myClubs.length, hasFetchedMyClubs, authLoading]); 
 
 
-  // Effect to handle pending club join after login - RE-ENABLED
+  // Effect to handle pending club join after login - Keep this logic
   useEffect(() => {
     if (isAuthenticated && user?.id) {
       const pendingClubId = sessionStorage.getItem('pendingJoinClubId');
@@ -113,7 +114,7 @@ const ClubPage = () => {
     }
   }, [isAuthenticated, user?.id, dispatch, authLoading]);
 
-  // Effect to display Redux errors - RE-ENABLED
+  // Effect to display Redux errors - Keep this logic
   useEffect(() => {
     if (error) {
       setMessage(error);
@@ -135,7 +136,7 @@ const ClubPage = () => {
     } else if (!user?.id) { 
         console.log("handleJoin: User data not fully loaded (user.id is missing). Redirecting to login."); 
         setMessage('User data not fully loaded. Please try again.');
-        navigate('/login'); 
+        navigate('/login'); // Redirect to login if user.id is somehow missing after App.jsx check
     } else {
       setMessage(null); 
       try {
@@ -148,6 +149,18 @@ const ClubPage = () => {
         setMessage(`Failed to join club: ${err}`);
         console.error("handleJoin: Error joining club:", err); 
       }
+    }
+  };
+
+  // Max's new feature: handleLeave function - INTEGRATED
+  const handleLeave = async (clubId) => {
+    setMessage(null);
+    try {
+      await dispatch(leaveClub(clubId)).unwrap();
+      setMessage('You have left the club.');
+      dispatch(fetchMyClubs()); // Re-fetch my clubs to update the list
+    } catch (err) {
+      setMessage(`Failed to leave club: ${err}`);
     }
   };
 
@@ -172,7 +185,7 @@ const ClubPage = () => {
     );
   }
 
-  // Show loading state if any
+  // Show loading state if any - Keep granular loading states
   if (authLoading || isAllClubsLoading || isMyClubsLoading) { 
     return (
       <div className="club-page p-6 bg-gray-900 min-h-screen text-white flex items-center justify-center">
@@ -181,7 +194,7 @@ const ClubPage = () => {
     );
   }
   
-  // Show error state if any
+  // Show error state if any - Keep this
   if (error) { 
     return (
       <div className="club-page p-6 bg-gray-900 min-h-screen text-red-500 text-center">
@@ -195,9 +208,9 @@ const ClubPage = () => {
 
 
   return (
-    <div className="club-page p-6 bg-gray-900 min-h-screen text-white"> 
-      <div className="feed-welcome-box bg-gray-800 rounded-lg p-6 shadow-lg mb-8"> 
-        <h1 className="text-3xl font-bold mb-3 text-orange-400">Join a Club</h1> 
+    <div className="club-page p-6 bg-gray-900 min-h-screen text-white"> {/* Keep styling */}
+      <div className="feed-welcome-box bg-gray-800 rounded-lg p-6 shadow-lg mb-8"> {/* Keep styling */}
+        <h1 className="text-3xl font-bold mb-3 text-orange-400">Join a Club</h1> {/* Keep styling */}
         <p className="text-gray-300">Find a community that shares your taste in TV shows and movies!</p>
       </div>
 
@@ -206,10 +219,15 @@ const ClubPage = () => {
       {/* My Clubs Section - RE-ENABLED */}
       {isAuthenticated && myClubs.length > 0 ? (
         <div className="my-clubs-section mt-8">
-          <h2 className="text-xl font-semibold mb-4 text-orange-400">My Clubs</h2> 
-          <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> 
+          <h2 className="text-xl font-semibold mb-4 text-orange-400">My Clubs</h2> {/* Keep styling */}
+          <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> {/* Keep styling */}
             {myClubs.map((club) => (
-              <ClubCard key={club.id} club={club} isJoined={true} />
+              <ClubCard 
+                key={club.id} 
+                club={club} 
+                isJoined={true} 
+                onLeave={() => handleLeave(club.id)} // INTEGRATED Max's onLeave
+              />
             ))}
           </div>
         </div>
@@ -222,12 +240,17 @@ const ClubPage = () => {
 
       {/* Explore All Clubs Section - RE-ENABLED */}
       <div className="all-clubs-section mt-8">
-        <h2 className="text-xl font-semibold mb-4 text-orange-400">Explore All Clubs</h2> 
-        <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> 
+        <h2 className="text-xl font-semibold mb-4 text-orange-400">Explore All Clubs</h2> {/* Keep styling */}
+        <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> {/* Keep styling */}
           {isAllClubsLoading && <p className="text-blue-400 text-center">Loading clubs to explore...</p>} 
           {allClubs.length > 0 ? (
             availableClubs.map((club) => (
-              <ClubCard key={club.id} club={club} onJoin={() => handleJoin(club.id)} /> 
+              <ClubCard 
+                key={club.id} 
+                club={club} 
+                isJoined={false} // Ensure isJoined is false for available clubs
+                onJoin={() => handleJoin(club.id)} 
+              /> 
             ))
           ) : (
             !isAllClubsLoading && <p className="text-gray-400 text-center">No clubs available to explore.</p> 
