@@ -8,6 +8,7 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 from flask_cors import CORS
 from datetime import timedelta
+import traceback # NEW: Import traceback for detailed error logging
 
 load_dotenv()
 
@@ -49,18 +50,23 @@ def create_app():
     # Register error handlers
     @app.errorhandler(404)
     def not_found(error):
+        # For 404s, we'll still return the standard message, but the traceback might be useful if it's an internal 404
+        print(f"DEBUG: 404 Error caught: {error}")
+        traceback.print_exc() # Print traceback for 404s too, just in case
         return make_response(jsonify({'errors': ['Not Found']}), 404)
 
     @app.errorhandler(400)
     def bad_request(error):
+        print(f"DEBUG: 400 Error caught: {error}")
+        traceback.print_exc() # Print traceback for 400s
         return make_response(jsonify({'errors': ['Bad Request']}), 400)
 
-    # Generic Exception Handler
+    # Generic Exception Handler - MODIFIED FOR DEBUGGING
     @app.errorhandler(Exception)
     def handle_exception(e):
         db.session.rollback()
-        # In debug mode, Flask will still show the traceback in the console.
-        # In production, this provides a clean 500 error.
+        print(f"DEBUG: Caught unexpected exception: {type(e).__name__}: {str(e)}")
+        traceback.print_exc() # THIS IS THE KEY CHANGE: Print full traceback
         return make_response(jsonify({'message': f'Unexpected error: {str(e)}'}), 500)
 
     @app.route('/')
@@ -70,7 +76,7 @@ def create_app():
     # Register API resources (Flask-RESTful)
     from .routes.auth_routes import UserRegistration, UserLogin, CheckSession
     api.add_resource(UserRegistration, '/auth/register') 
-    api.add_resource(UserLogin, '/auth/login')         
+    api.add_resource(UserLogin, '/auth/login') 
     api.add_resource(CheckSession, '/auth/check_session') 
 
     # Register Flask Blueprints 
@@ -81,7 +87,7 @@ def create_app():
     app.register_blueprint(post_bp, url_prefix='/posts') 
 
     from .routes.user_routes import user_bp
-    app.register_blueprint(user_bp, url_prefix='/users')
+    app.register_blueprint(user_bp, url_prefix='') 
 
     from .routes.movie_routes import movie_bp
     app.register_blueprint(movie_bp, url_prefix='/movies')

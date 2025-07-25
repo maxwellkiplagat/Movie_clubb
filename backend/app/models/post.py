@@ -18,9 +18,6 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
     author = db.relationship('User', back_populates='posts', foreign_keys=[user_id])
     club = db.relationship('Club', back_populates='posts')
 
-    # Remove serialize_rules to rely entirely on custom to_dict
-    # serialize_rules = ( ... )
-
     def to_dict(self):
         # Manually construct the dictionary to avoid recursion
         data = {
@@ -33,15 +30,14 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
         
-        # Add author_username directly
+        # Add author_username AND author_id directly
         if self.author:
             data['author_username'] = self.author.username
+            data['author_id'] = self.author.id # <--- ADDED THIS CRUCIAL LINE
         else:
             data['author_username'] = 'Unknown'
+            data['author_id'] = None # Ensure it's explicitly None if author is missing
 
-        # Do NOT include self.author or self.club directly here
-        # to prevent recursion.
-        
         return data
 
     def __repr__(self):
