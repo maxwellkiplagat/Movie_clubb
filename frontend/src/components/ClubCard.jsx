@@ -39,9 +39,7 @@ const ClubCard = ({ club, onJoin = () => {}, onLeave = () => {}, isJoined }) => 
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (typeof onLeave === 'function') {
-                onLeave();
-              }
+              onLeave();
             }}
             className="
               leave-btn
@@ -59,9 +57,7 @@ const ClubCard = ({ club, onJoin = () => {}, onLeave = () => {}, isJoined }) => 
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (typeof onJoin === 'function') {
-              onJoin();
-            }
+            onJoin(); // This handles login redirection if not authenticated
           }}
           className="
             join-btn
@@ -79,7 +75,6 @@ const ClubCard = ({ club, onJoin = () => {}, onLeave = () => {}, isJoined }) => 
   );
 };
 
-// Optional: Add PropTypes for clarity and debugging
 ClubCard.propTypes = {
   club: PropTypes.object.isRequired,
   onJoin: PropTypes.func,
