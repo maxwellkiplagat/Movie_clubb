@@ -1,12 +1,14 @@
-// src/features/pages/Feed.jsx
-
-import React from 'react';
+import React, { useEffect } from 'react'; // Keep useEffect if intended for use
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import '../../styles.css';
 
 const Feed = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  // Note: useEffect is imported but not used in the provided snippet.
+  // If no useEffect logic is intended for this component,
+  // the 'useEffect' import can be removed to satisfy ESLint.
 
   return (
     <div className="page-container">
@@ -15,27 +17,26 @@ const Feed = () => {
         <p className="feed-subtitle">
           Connect with fellow movie and TV series enthusiasts
         </p>
-
-        {!isAuthenticated ? (
-          <div className="feed-buttons">
-            <Link to="/register" className="join-btn">
-              Join the Community
-            </Link>
-            <Link to="/login" className="login-btn-box">
-              Sign In
-            </Link>
-          </div>
-        ) : (
-          <p className="text-green-400 mt-4 text-center">
-            👋 Welcome back{user?.username ? `, @${user.username}` : ''}!
-          </p>
-        )}
+    {!isAuthenticated ? (
+      <div className="feed-buttons">
+        <Link to="/register" className="join-btn">
+          Join the Community
+        </Link>
+        <Link to="/login" className="login-btn-box">
+          Sign In
+        </Link>
       </div>
+    ) : (
+      <p className="text-green-400 mt-4 text-center">
+        👋 Welcome back{user?.username ? `, @${user.username}` : ''}!
+      </p>
+    )}
+  </div>
 
-      <div className="text-center mt-8 text-gray-400">
-        <p>Explore clubs or join one to see and create posts!</p>
-      </div>
-    </div>
+  <div className="text-center mt-8 text-gray-400">
+    <p>Explore clubs or join one to see and create posts!</p>
+  </div>
+</div>
   );
 };
 

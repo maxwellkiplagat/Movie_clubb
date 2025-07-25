@@ -1,41 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux'; 
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   fetchClubPosts,
   clearClubError,
-  clearCurrentClubPosts, 
-} from '../clubs/clubSlice'; 
+  clearCurrentClubPosts,
+  leaveClub
+} from '../clubs/clubSlice';
 
-// PostCard component to display individual posts (updated to include interactive elements)
+// Reusable PostCard component
 const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments, following }) => {
   return (
-    <div className="forum-post-card">
-      <h2 className="text-xl font-bold text-blue-400 mb-2">
-        {post.movie_title}
-      </h2>
+    <div className="forum-post-card mb-6 bg-gray-800 p-4 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold text-blue-400 mb-2">{post.movie_title}</h2>
       <p className="text-gray-300 mb-3">{post.content}</p>
+
       <div className="post-meta text-sm text-gray-400 flex justify-between items-center">
-        {/* Use author_username from backend and created_at_formatted */}
         <span>By @{post.author_username || "Unknown"}</span>
         <span>{new Date(post.created_at_formatted).toLocaleDateString()}</span>
       </div>
 
       <div className="mt-2 flex gap-3 items-center text-sm">
-        <button
-          onClick={() => toggleLike(post.id)}
-          className="text-blue-400 hover:underline"
-        >
-          Like ({likes[post.id] || 0}) {/* Removed emoji */}
+        <button onClick={() => toggleLike(post.id)} className="text-blue-400 hover:underline">
+          Like ({likes[post.id] || 0})
         </button>
-
-        {/* Use post.author_username for following logic */}
-        <button
-          onClick={() => toggleFollow(post.author_username)}
-          className="text-purple-400 hover:underline"
-        >
-          {following[post.author_username] ? "Unfollow" : "Follow"} @
-          {post.author_username}
+        <button onClick={() => toggleFollow(post.author_username)} className="text-purple-400 hover:underline">
+          {following[post.author_username] ? "Unfollow" : "Follow"} @{post.author_username}
         </button>
       </div>
 
@@ -58,7 +48,7 @@ const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments,
               e.target.value = "";
             }
           }}
-          className="bg-gray-800 px-2 py-1 rounded w-full text-white"
+          className="bg-gray-700 px-2 py-1 rounded w-full text-white"
         />
       </div>
     </div>
@@ -66,31 +56,28 @@ const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments,
 };
 
 function ClubDetails() {
-  const { id } = useParams(); // Get club ID from URL
-  const dispatch = useDispatch(); 
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  // State for likes, comments, and following
   const [likes, setLikes] = useState({});
   const [comments, setComments] = useState({});
   const [following, setFollowing] = useState({});
 
-  // Redux state selectors
   const { allClubs, currentClubPosts, isLoading, error } = useSelector((state) => state.clubs);
   const { isAuthenticated } = useSelector((state) => state.auth);
   const club = allClubs.find(c => c.id === parseInt(id));
 
-  // Effect to fetch posts for this specific club
   useEffect(() => {
     if (id) {
-      dispatch(clearClubError()); 
-      dispatch(fetchClubPosts(parseInt(id))); 
+      dispatch(clearClubError());
+      dispatch(fetchClubPosts(parseInt(id)));
     }
     return () => {
       dispatch(clearCurrentClubPosts());
     };
-  }, [id, dispatch]); 
+  }, [id, dispatch]);
 
-  // Effect to check authentication and user data
   const toggleLike = (postId) => {
     setLikes(prev => ({
       ...prev,
@@ -105,20 +92,24 @@ function ClubDetails() {
     }));
   };
 
-  const toggleFollow = (authorUsername) => { // Changed to authorUsername for clarity
+  const toggleFollow = (authorUsername) => {
     setFollowing(prev => ({
       ...prev,
       [authorUsername]: !prev[authorUsername]
     }));
   };
 
-  // Loading, error, and club not found checks (your version)
+  const handleLeaveClub = () => {
+    dispatch(leaveClub(club.id));
+    navigate('/clubs');
+  };
+
   if (isLoading && !club && currentClubPosts.length === 0) {
     return <p className="text-blue-400 text-center mt-8">Loading club details and posts...</p>;
   }
 
   if (error) {
-    return <p className="error text-red-500 text-center mt-8">Error: {error}</p>;
+    return <p className="text-red-500 text-center mt-8">Error: {error}</p>;
   }
 
   if (!club) {
@@ -127,21 +118,22 @@ function ClubDetails() {
 
   return (
     <div className="page-container p-6 bg-gray-900 min-h-screen text-white">
-      <h1 className="text-3xl font-bold text-orange-400 mb-2">{club.name}</h1>
-      <p className="club-desc text-gray-300 text-lg mb-4">{club.description}</p>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="text-3xl font-bold text-orange-400">{club.name}</h1>
+          <p className="text-gray-300 text-lg">{club.description}</p>
+        </div>
 
-      {isAuthenticated && ( // Only show create post button if authenticated
+        {isAuthenticated && (
+          <button onClick={handleLeaveClub} className="leave-btn">
+            Leave Club
+          </button>
+        )}
+      </div>
+
+      {isAuthenticated && (
         <div className="text-right mb-6">
-          <Link
-            to={`/clubs/${club.id}/create-post`}
-            className="
-              bg-blue-600 hover:bg-blue-700
-              text-white font-bold
-              py-2 px-4 rounded-full
-              shadow-md transition duration-300 ease-in-out
-              transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75
-            "
-          >
+          <Link to={`/clubs/${club.id}/create-post`} className="create-post-btn">
             + Create Post
           </Link>
         </div>
@@ -150,13 +142,13 @@ function ClubDetails() {
       {isLoading && currentClubPosts.length === 0 ? (
         <p className="text-blue-400 text-center">Loading posts for this club...</p>
       ) : currentClubPosts.length === 0 ? (
-        <p className="no-posts-text text-gray-400 text-center mt-8">No posts in this club yet.</p>
+        <p className="text-gray-400 text-center mt-8">No posts in this club yet.</p>
       ) : (
         <div className="feed-list mt-8">
           {currentClubPosts.map(post => (
-            <PostCard 
-              key={post.id} 
-              post={post} 
+            <PostCard
+              key={post.id}
+              post={post}
               toggleLike={toggleLike}
               addComment={addComment}
               toggleFollow={toggleFollow}

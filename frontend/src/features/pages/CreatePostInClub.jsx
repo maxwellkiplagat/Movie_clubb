@@ -30,7 +30,7 @@ function CreatePostInClub() {
         setMessage(null);
         navigate(`/clubs/${id}`); 
       }, 1500); // Show success message for 1.5 seconds
-      return () => clearTimeout(timer); // Cleanup timer
+      return () => clearTimeout(timer); 
     } else if (postCreationStatus === 'failed') {
       setMessage(`Error: ${postCreationError || 'Failed to create post.'}`);
       // Clear error after a short delay or user interaction
@@ -111,7 +111,8 @@ function CreatePostInClub() {
 
         <button
           type="submit"
-          className="
+          // Changed double quotes to backticks for template literal
+          className={`
             bg-blue-600 hover:bg-blue-700
             text-white font-bold
             py-2 px-4 rounded-lg
@@ -119,7 +120,7 @@ function CreatePostInClub() {
             shadow-md transition duration-300 ease-in-out
             transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75
             ${postCreationStatus === 'pending' ? 'opacity-50 cursor-not-allowed' : ''}
-          "
+          `}
           disabled={postCreationStatus === 'pending'} 
         >
           {postCreationStatus === 'pending' ? 'Submitting...' : 'Submit Post'}
