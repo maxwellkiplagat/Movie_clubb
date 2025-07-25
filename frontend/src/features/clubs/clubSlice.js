@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { logout } from '../auth/authSlice'; // CORRECTED: Import logout action
+import { logout } from '../auth/authSlice'; 
 
 const API_URL = 'http://127.0.0.1:5000';
 
@@ -29,9 +29,11 @@ export const fetchMyClubs = createAsyncThunk(
   async (_, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
-      const userId = getState().auth.user?.id;
+      const userId = getState().auth.user?.id; // Ensure user.id is correctly retrieved
       if (!token || !userId) {
-        return rejectWithValue('User not authenticated or ID missing');
+        // If no token or user ID, we can't fetch user-specific clubs.
+        // Returning a rejection here is correct.
+        return rejectWithValue('User not authenticated or ID missing. Cannot fetch user clubs.');
       }
       const response = await fetch(`${API_URL}/users/${userId}/clubs`, {
         method: 'GET',
@@ -133,8 +135,8 @@ const clubSlice = createSlice({
     allClubs: [],
     myClubs: [],
     currentClubPosts: [],
-    isAllClubsLoading: false, 
-    isMyClubsLoading: false,  
+    isAllClubsLoading: false, // Confirmed
+    isMyClubsLoading: false,  // Confirmed
     isLoading: false,         
     error: null,
     postCreationStatus: 'idle', 
@@ -153,7 +155,6 @@ const clubSlice = createSlice({
     clearPostCreationError: (state) => { 
       state.postCreationError = null;
     },
-    // Reducer to manually clear all club data (useful on logout)
     resetClubState: (state) => {
       state.allClubs = [];
       state.myClubs = [];
@@ -226,8 +227,7 @@ const clubSlice = createSlice({
         state.postCreationStatus = 'failed';
         state.postCreationError = action.payload;
       })
-      //  Clear club state when user logs out
-      .addCase(logout, (state) => { //Listen for the logout action directly
+      .addCase(logout, (state) => { 
         console.log("clubSlice: Handling logout, resetting club state.");
         state.allClubs = [];
         state.myClubs = [];
