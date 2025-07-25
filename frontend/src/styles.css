@@ -5,6 +5,11 @@ body {
   background-color: #000;
   color: #fff;
   box-sizing: border-box;
+  background-image: url('./assets/Movie2.jpeg'); /* ✅ relative to styles.css */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 /* === NAVBAR === */
