@@ -33,7 +33,9 @@ const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments,
         <h4 className="font-semibold mb-1">Comments:</h4>
         <ul className="text-sm text-gray-300 mb-2">
           {(comments[post.id] || []).map((cmt, i) => (
-            <li key={i} className="mb-1">- {cmt}</li>
+            <li key={i} className="mb-1">
+              - {cmt}
+            </li>
           ))}
         </ul>
 

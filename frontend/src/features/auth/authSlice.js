@@ -42,8 +42,8 @@ export const loginUser = createAsyncThunk(
       });
 
       const data = await response.json();
-      console.log("loginUser Thunk: Response data:", data); 
-      console.log("loginUser Thunk: Response OK:", response.ok); 
+      console.log("loginUser Thunk: Response data:", data);
+      console.log("loginUser Thunk: Response OK:", response.ok);
 
       if (!response.ok) {
         return rejectWithValue(data.message || 'Login failed');
@@ -58,7 +58,7 @@ export const loginUser = createAsyncThunk(
       // Ensure 'id' is always present in the user object
       return { ...data, id: data.user_id }; 
     } catch (error) {
-      console.error("loginUser Thunk: Catch block error:", error); 
+      console.error("loginUser Thunk: Catch block error:", error);
       return rejectWithValue(error.message || 'Network error during login');
     }
   }
