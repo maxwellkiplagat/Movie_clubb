@@ -81,7 +81,7 @@ function ClubDetails() {
   const toggleLike = (postId) => {
     setLikes(prev => ({
       ...prev,
-      [postId]: prev[postId] ? prev[postId] + 1 : 1
+      [postId]: prev[postId] === 1 ? 0 : 1
     }));
   };
 
