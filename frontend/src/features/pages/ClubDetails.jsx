@@ -4,56 +4,13 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
   fetchClubPosts,
   clearClubError,
-  clearCurrentClubPosts,
-  leaveClub
+  clearCurrentClub, 
+  leaveClub,
+  fetchClubDetails 
 } from '../clubs/clubSlice';
+import PostCard from '../../components/PostCard'; // ADDED: Import PostCard component
 
-// Reusable PostCard component
-const PostCard = ({ post, toggleLike, addComment, toggleFollow, likes, comments, following }) => {
-  return (
-    <div className="forum-post-card mb-6 bg-gray-800 p-4 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold text-blue-400 mb-2">{post.movie_title}</h2>
-      <p className="text-gray-300 mb-3">{post.content}</p>
-
-      <div className="post-meta text-sm text-gray-400 flex justify-between items-center">
-        <span>By @{post.author_username || "Unknown"}</span>
-        <span>{new Date(post.created_at_formatted).toLocaleDateString()}</span>
-      </div>
-
-      <div className="mt-2 flex gap-3 items-center text-sm">
-        <button onClick={() => toggleLike(post.id)} className="text-blue-400 hover:underline">
-          Like ({likes[post.id] || 0})
-        </button>
-        <button onClick={() => toggleFollow(post.author_username)} className="text-purple-400 hover:underline">
-          {following[post.author_username] ? "Unfollow" : "Follow"} @{post.author_username}
-        </button>
-      </div>
-
-      <div className="mt-4">
-        <h4 className="font-semibold mb-1">Comments:</h4>
-        <ul className="text-sm text-gray-300 mb-2">
-          {(comments[post.id] || []).map((cmt, i) => (
-            <li key={i} className="mb-1">
-              - {cmt}
-            </li>
-          ))}
-        </ul>
-
-        <input
-          type="text"
-          placeholder="Add a comment..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && e.target.value.trim() !== "") {
-              addComment(post.id, e.target.value.trim());
-              e.target.value = "";
-            }
-          }}
-          className="bg-gray-700 px-2 py-1 rounded w-full text-white"
-        />
-      </div>
-    </div>
-  );
-};
+// The redundant local PostCard definition has been removed.
 
 function ClubDetails() {
   const { id } = useParams();
@@ -62,21 +19,26 @@ function ClubDetails() {
 
   const [likes, setLikes] = useState({});
   const [comments, setComments] = useState({});
-  const [following, setFollowing] = useState({});
 
-  const { allClubs, currentClubPosts, isLoading, error } = useSelector((state) => state.clubs);
+  const { 
+    currentClub, 
+    currentClubPosts, 
+    isCurrentClubLoading, 
+    isLoading, 
+    error 
+  } = useSelector((state) => state.clubs);
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const club = allClubs.find(c => c.id === parseInt(id));
 
   useEffect(() => {
     if (id) {
-      dispatch(clearClubError());
-      dispatch(fetchClubPosts(parseInt(id)));
+      dispatch(clearClubError()); 
+      dispatch(fetchClubDetails(parseInt(id))); 
+      dispatch(fetchClubPosts(parseInt(id))); 
     }
     return () => {
-      dispatch(clearCurrentClubPosts());
+      dispatch(clearCurrentClub()); 
     };
-  }, [id, dispatch]);
+  }, [id, dispatch]); 
 
   const toggleLike = (postId) => {
     setLikes(prev => ({
@@ -92,27 +54,22 @@ function ClubDetails() {
     }));
   };
 
-  const toggleFollow = (authorUsername) => {
-    setFollowing(prev => ({
-      ...prev,
-      [authorUsername]: !prev[authorUsername]
-    }));
-  };
-
   const handleLeaveClub = () => {
-    dispatch(leaveClub(club.id));
-    navigate('/clubs');
+    if (currentClub) {
+      dispatch(leaveClub(currentClub.id));
+      navigate('/clubs'); 
+    }
   };
 
-  if (isLoading && !club && currentClubPosts.length === 0) {
-    return <p className="text-blue-400 text-center mt-8">Loading club details and posts...</p>;
+  if (isCurrentClubLoading) { 
+    return <p className="text-blue-400 text-center mt-8">Loading club details...</p>;
   }
 
-  if (error) {
+  if (error) { 
     return <p className="text-red-500 text-center mt-8">Error: {error}</p>;
   }
 
-  if (!club) {
+  if (!currentClub) {
     return <p className="text-gray-400 text-center mt-8">Club not found or not loaded.</p>;
   }
 
@@ -120,8 +77,8 @@ function ClubDetails() {
     <div className="page-container p-6 bg-gray-900 min-h-screen text-white">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-3xl font-bold text-orange-400">{club.name}</h1>
-          <p className="text-gray-300 text-lg">{club.description}</p>
+          <h1 className="text-3xl font-bold text-orange-400">{currentClub.name}</h1> 
+          <p className="text-gray-300 text-lg">{currentClub.description}</p> 
         </div>
 
         {isAuthenticated && (
@@ -133,13 +90,13 @@ function ClubDetails() {
 
       {isAuthenticated && (
         <div className="text-right mb-6">
-          <Link to={`/clubs/${club.id}/create-post`} className="create-post-btn">
+          <Link to={`/clubs/${currentClub.id}/create-post`} className="create-post-btn"> 
             + Create Post
           </Link>
         </div>
       )}
 
-      {isLoading && currentClubPosts.length === 0 ? (
+      {isLoading && currentClubPosts.length === 0 ? ( 
         <p className="text-blue-400 text-center">Loading posts for this club...</p>
       ) : currentClubPosts.length === 0 ? (
         <p className="text-gray-400 text-center mt-8">No posts in this club yet.</p>
@@ -149,12 +106,10 @@ function ClubDetails() {
             <PostCard
               key={post.id}
               post={post}
-              toggleLike={toggleLike}
-              addComment={addComment}
-              toggleFollow={toggleFollow}
-              likes={likes}
-              comments={comments}
-              following={following}
+              toggleLike={toggleLike} 
+              addComment={addComment} 
+              likes={likes} 
+              comments={comments} 
             />
           ))}
         </div>

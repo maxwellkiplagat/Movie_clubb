@@ -1,27 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchUserProfile, updateUserProfile, clearError } from '../auth/authSlice'; 
+import { 
+  fetchUserProfile, 
+  updateUserProfile, 
+  clearError, 
+  fetchFollowing, 
+  unfollowUser,
+  fetchFollowers 
+} from '../auth/authSlice'; 
 import { fetchMyClubs } from '../clubs/clubSlice'; 
 import PostCard from '../../components/PostCard'; 
+import ClubCard from '../../components/ClubCard'; 
 
 // Simple Modal Component for Edit Profile
 const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
-    password: '', // Allow password change
+    password: '', 
   });
 
-  // Effect to reset form data when user prop changes
   useEffect(() => {
     console.log("EditProfileModal useEffect: User prop changed, resetting form data.");
     setFormData({
       username: user?.username || '',
       email: user?.email || '',
-      password: '', // Always clear password field on user change/modal open
+      password: '', 
     });
-  }, [user?.id, user?.username, user?.email]); // ADDED user?.username, user?.email to dependencies
+  }, [user?.id, user?.username, user?.email]); 
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -107,64 +114,109 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { user, isAuthenticated, isLoading, error: authError } = useSelector((state) => state.auth); 
+  const navigate = useNavigate(); 
+
+  const { 
+    user, 
+    isAuthenticated, 
+    isLoading: authLoading, 
+    error: authError,
+    following, 
+    isFollowingLoading, 
+    followingError, 
+    followers, 
+    isFollowersLoading, 
+    followersError, 
+  } = useSelector((state) => state.auth); 
   const { myClubs, isMyClubsLoading, error: clubsError } = useSelector((state) => state.clubs); 
   
   const [showEditModal, setShowEditModal] = useState(false);
-  const [hasFetchedDashboardClubs, setHasFetchedDashboardClubs] = useState(false); // NEW STATE for Dashboard clubs
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false); 
 
-  // Debugging logs for Dashboard render
+  // Combined logging useEffect - keep this for debugging
   useEffect(() => {
     console.log("Dashboard Render - user state:", user);
     console.log("Dashboard Render - isAuthenticated:", isAuthenticated);
-    console.log("Dashboard Render - auth isLoading:", isLoading);
+    console.log("Dashboard Render - auth isLoading:", authLoading);
     console.log("Dashboard Render - auth error:", authError);
     console.log("Dashboard Render - myClubs count:", myClubs ? myClubs.length : 0);
     console.log("Dashboard Render - isMyClubsLoading:", isMyClubsLoading); 
-    console.log("Dashboard Render - hasFetchedDashboardClubs:", hasFetchedDashboardClubs); // NEW LOG
-  }, [user, isAuthenticated, isLoading, authError, myClubs, isMyClubsLoading, hasFetchedDashboardClubs]); // Added hasFetchedDashboardClubs to dependencies
+    console.log("Dashboard Render - following count:", following ? following.length : 0); 
+    console.log("Dashboard Render - isFollowingLoading:", isFollowingLoading); 
+    console.log("Dashboard Render - followingError:", followingError); 
+    console.log("Dashboard Render - followers count:", followers ? followers.length : 0); 
+    console.log("Dashboard Render - isFollowersLoading:", isFollowersLoading); 
+    console.log("Dashboard Render - followersError:", followersError); 
+    console.log("Dashboard Render - hasLoadedInitialData:", hasLoadedInitialData); 
+  }, [user, isAuthenticated, authLoading, authError, myClubs, isMyClubsLoading, following, isFollowingLoading, followingError, followers, isFollowersLoading, followersError, hasLoadedInitialData]); 
 
-  // Main effect for fetching user profile and clubs
+  // Main effect for fetching user profile, clubs, and following/followers
   useEffect(() => {
     console.log("Dashboard useEffect (fetch): Checking conditions for fetching data.");
-    console.log("  isAuthenticated:", isAuthenticated);
-    console.log("  user?.id:", user?.id);
-    console.log("  user?.username:", user?.username);
-    console.log("  user?.email:", user?.email);
-    console.log("  isMyClubsLoading:", isMyClubsLoading);
-    console.log("  myClubs?.length:", myClubs?.length);
-    console.log("  hasFetchedDashboardClubs:", hasFetchedDashboardClubs); // NEW LOG
+    console.log("   isAuthenticated:", isAuthenticated);
+    console.log("   user?.id:", user?.id);
+    console.log("   hasLoadedInitialData:", hasLoadedInitialData); 
 
-    // Only proceed if authenticated and user ID is available
-    if (isAuthenticated && user?.id) { 
-        // Fetch user profile only if it's not already fully populated
-        // Check for essential profile data (username or email)
-        if (!user.username || !user.email) {
-            console.log("Dashboard useEffect: User authenticated but profile incomplete, dispatching fetchUserProfile.");
+    if (isAuthenticated && user?.id && !hasLoadedInitialData) { 
+        let shouldFetchUserProfile = !user.username || !user.email; 
+        let shouldFetchMyClubs = !isMyClubsLoading && (!myClubs || myClubs.length === 0); 
+        let shouldFetchFollowing = !isFollowingLoading && (!following || following.length === 0); 
+        let shouldFetchFollowers = !isFollowersLoading && (!followers || followers.length === 0); 
+
+        console.log(`   Should fetch user profile: ${shouldFetchUserProfile}`);
+        console.log(`   Should fetch my clubs: ${shouldFetchMyClubs}`);
+        console.log(`   Should fetch following: ${shouldFetchFollowing}`);
+        console.log(`   Should fetch followers: ${shouldFetchFollowers}`); 
+
+        if (shouldFetchUserProfile) {
+            console.log("Dashboard useEffect: Dispatching fetchUserProfile.");
             dispatch(fetchUserProfile(user.id));
         }
-
-        // Fetch myClubs only if not loading, myClubs is empty, AND we haven't already attempted to fetch them for the dashboard
-        if (!isMyClubsLoading && (!myClubs || myClubs?.length === 0) && !hasFetchedDashboardClubs) { // MODIFIED CONDITION
-            console.log("Dashboard useEffect: User authenticated and myClubs not populated, dispatching fetchMyClubs.");
+        if (shouldFetchMyClubs) { 
+            console.log("Dashboard useEffect: Dispatching fetchMyClubs.");
             dispatch(fetchMyClubs());
-            setHasFetchedDashboardClubs(true); // Set flag after dispatch
-        } else {
-            console.log(`Dashboard useEffect: Not dispatching fetchMyClubs. isMyClubsLoading: ${isMyClubsLoading}, myClubs.length: ${myClubs?.length}, hasFetchedDashboardClubs: ${hasFetchedDashboardClubs}`);
         }
-    } else if (!isAuthenticated) {
-        console.log("Dashboard useEffect: Not authenticated. User profile and clubs will not be fetched.");
-        // Reset flag if user logs out
-        if (hasFetchedDashboardClubs) {
-            console.log("Dashboard useEffect: Not authenticated, resetting hasFetchedDashboardClubs flag.");
-            setHasFetchedDashboardClubs(false);
+        if (shouldFetchFollowing) {
+            console.log("Dashboard useEffect: Dispatching fetchFollowing.");
+            dispatch(fetchFollowing(user.id));
         }
+        if (shouldFetchFollowers) { 
+            console.log("Dashboard useEffect: Dispatching fetchFollowers.");
+            dispatch(fetchFollowers(user.id));
+        }
+
+        if (!shouldFetchUserProfile && !shouldFetchMyClubs && !shouldFetchFollowing && !shouldFetchFollowers) { 
+            setHasLoadedInitialData(true);
+            console.log("Dashboard useEffect: All initial fetches dispatched or already loaded. Setting hasLoadedInitialData to true.");
+        }
+
+    } else if (!isAuthenticated && hasLoadedInitialData) { 
+        console.log("Dashboard useEffect: Not authenticated and data was loaded. Resetting hasLoadedInitialData.");
+        setHasLoadedInitialData(false);
+    } else if (!isAuthenticated && !authLoading) { 
+        console.log("Dashboard useEffect: Not authenticated and not loading. Redirecting to login.");
+        navigate('/login'); 
+    } else if (isAuthenticated && user?.id && hasLoadedInitialData) {
+        console.log("Dashboard useEffect: Authenticated, user ID present, and initial data already loaded. No re-fetch.");
     }
-  // All dependencies for the conditions above must be included here
-  }, [isAuthenticated, user?.id, dispatch, isMyClubsLoading, myClubs?.length, user?.username, user?.email, hasFetchedDashboardClubs]); // ADDED hasFetchedDashboardClubs
 
+  }, [
+    isAuthenticated, 
+    user?.id, 
+    user?.username, 
+    user?.email,
+    dispatch, 
+    isMyClubsLoading, 
+    myClubs, 
+    isFollowingLoading, 
+    following, 
+    isFollowersLoading, 
+    followers, 
+    hasLoadedInitialData, 
+    authLoading, 
+    navigate 
+  ]);
 
-  // Handle profile save
   const handleSaveProfile = async (updatedData) => {
     if (!user || !user.id) {
       console.error("User ID missing for profile update.");
@@ -180,51 +232,35 @@ const Dashboard = () => {
     }
   };
 
-  // Clear error when modal is closed
   const handleCloseModal = () => {
     setShowEditModal(false);
     dispatch(clearError()); 
   };
 
-  // --- Mock Data (To be replaced with Redux/Backend data later) ---
   const mockPosts = [
-    { id: 1, movieTitle: 'Inception', content: 'Mind-blowing plot!', clubName: 'Sci-Fi Nerds', date: '2025-07-15', likes: 5, comments: [] },
-    { id: 2, movieTitle: 'Titanic', content: 'So emotional.', clubName: 'Rom-Com Lovers', date: '2025-07-14', likes: 3, comments: [] },
+    { id: 1, movie_title: 'Inception', content: 'Mind-blowing plot!', clubName: 'Sci-Fi Nerds', created_at: '2025-07-15T10:00:00Z', author_username: 'mockuser1', author_id: 9991 },
+    { id: 2, movie_title: 'Titanic', content: 'So emotional.', clubName: 'Rom-Com Lovers', created_at: '2025-07-14T10:00:00Z', author_username: 'mockuser2', author_id: 9992 },
   ];
 
-  const mockFollowing = [
-    { id: 1, username: 'filmfan' },
-    { id: 2, username: 'cinebuff' },
-  ];
-
-  const mockFollowers = [
-    { id: 3, username: 'user123' },
-    { id: 4, username: 'tvlover' },
-  ];
-
-  const [following, setFollowing] = useState(mockFollowing);
-  const [followers] = useState(mockFollowers); 
-
-  const handleUnfollow = (userId) => {
-    setFollowing(prev => prev.filter(u => u.id !== userId));
+  const handleUnfollowFromDashboard = (userId) => {
+    console.log(`Dashboard: Attempting to unfollow user with ID: ${userId}`);
+    dispatch(unfollowUser(userId)); 
   };
   
-
-// Conditional rendering based on authentication and loading state
-  // Combined loading checks for a cleaner initial render state
-  if (!user?.id || isLoading || isMyClubsLoading || !isAuthenticated) { 
+  // Overall loading condition for the dashboard
+  if (!user?.id && authLoading) { 
     return (
       <div className="dashboard-loading p-6 bg-gray-900 min-h-screen text-white flex items-center justify-center">
-        <p className="text-blue-400 text-xl">Loading user profile and clubs...</p>
+        <p className="text-blue-400 text-xl">Loading user profile...</p> 
       </div>
     );
   }
-  
-  // Show error state if any
-  if (authError || clubsError) { 
+
+  // Handle errors specifically
+  if (authError || clubsError || followingError || followersError) { 
     return (
       <div className="dashboard-error p-6 bg-gray-900 min-h-screen text-red-500 text-center">
-        <p>Error loading dashboard: {authError || clubsError}</p>
+        <p>Error loading dashboard: {authError || clubsError || followingError || followersError}</p> 
         <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">
           Retry
         </button>
@@ -232,6 +268,10 @@ const Dashboard = () => {
     );
   }
 
+  // If not authenticated and not currently loading auth, redirect
+  if (!isAuthenticated) { 
+    return null; 
+  }
 
   return (
     <div className="dashboard-container p-6 bg-gray-900 min-h-screen text-white">
@@ -265,13 +305,14 @@ const Dashboard = () => {
           user={user} 
           onClose={handleCloseModal} 
           onSave={handleSaveProfile}
-          isLoading={isLoading}
+          isLoading={authLoading} 
           error={authError} 
         />
       )}
 
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Posts</h2>
+        {/* You will eventually fetch user-specific posts here */}
         {mockPosts.length === 0 ? (
           <p className="text-gray-400">You haven’t created any posts yet.</p>
         ) : (
@@ -283,51 +324,38 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* My Clubs Section - Now using Redux myClubs */}
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Clubs</h2>
-        {myClubs && myClubs.length === 0 ? ( 
+        {isMyClubsLoading ? ( 
+            <p className="text-blue-400 text-center">Loading your clubs...</p>
+        ) : myClubs && myClubs.length === 0 ? ( 
           <p className="text-gray-400">You haven't joined any clubs yet.</p>
         ) : (
           <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myClubs && myClubs.map(club => ( 
-              <div key={club.id} className="club-card bg-gray-700 rounded-lg p-4 shadow-md border-2 border-green-500">
-                <h3 className="club-title text-xl font-bold text-blue-400 mb-2">{club.name}</h3>
-                <p className="club-desc text-gray-300 text-sm mb-4">{club.description}</p>
-                <Link to={`/clubs/${club.id}`} className="
-                  bg-blue-600 hover:bg-blue-700
-                  text-white font-bold
-                  py-2 px-4 rounded-full
-                  shadow-md transition duration-300 ease-in-out
-                  transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75
-                  mt-3 inline-block
-                ">Go to Club</Link>
-              </div>
+              <ClubCard key={club.id} club={club} isJoined={true} /> 
             ))}
           </div>
         )}
       </div>
 
-      
-      
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">People I’m Following</h2>
-        {following.length === 0 ? (
+        {isFollowingLoading ? ( 
+            <p className="text-blue-400 text-center">Loading who you follow...</p>
+        ) : followingError ? ( 
+            <p className="text-red-500 text-center">Error loading following list: {followingError}</p>
+        ) : following.length === 0 ? ( 
           <p className="text-gray-400">You're not following anyone yet.</p>
-        ) : (
+        ) : ( 
           <ul className="feed-list">
-            {following.map(user => (
-              <li key={user.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
-                <p className="text-white text-lg">@{user.username}</p>
+            {following.map(followedUser => ( 
+              <li key={followedUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
+                <p className="text-white text-lg">@{followedUser.username}</p>
                 <button 
-                  className="
-                    bg-red-600 hover:bg-red-700
-                    text-white font-bold
-                    py-2 px-4 rounded-full
-                    shadow-md transition duration-300 ease-in-out
-                    transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75
-                  " 
-                  onClick={() => handleUnfollow(user.id)}
+                  // Use the leave-btn class directly for consistent red button styling
+                  className="leave-btn" 
+                  onClick={() => handleUnfollowFromDashboard(followedUser.id)}
                 >
                   Unfollow
                 </button>
@@ -337,17 +365,20 @@ const Dashboard = () => {
         )}
       </div>
 
-      
-      
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Followers</h2>
-        {followers.length === 0 ? (
+        {isFollowersLoading ? ( 
+            <p className="text-blue-400 text-center">Loading your followers...</p>
+        ) : followersError ? ( 
+            <p className="text-red-500 text-center">Error loading followers list: {followersError}</p>
+        ) : followers.length === 0 ? ( 
           <p className="text-gray-400">You don't have any followers yet.</p>
         ) : (
           <ul className="feed-list">
-            {followers.map(user => (
-              <li key={user.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md mb-4">
-                <p className="text-white text-lg">@{user.username}</p>
+            {followers.map(followerUser => ( 
+              <li key={followerUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md mb-4">
+                <p className="text-white text-lg">@{followerUser.username}</p>
+                {/* You might add a "Follow Back" button here later */}
               </li>
             ))}
           </ul>
