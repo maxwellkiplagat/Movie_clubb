@@ -9,7 +9,7 @@ import {
   unfollowUser,
   fetchFollowers 
 } from '../auth/authSlice'; 
-import { fetchMyClubs } from '../clubs/clubSlice'; 
+import { fetchMyClubs, leaveClub } from '../clubs/clubSlice'; // IMPORTED: leaveClub thunk
 import PostCard from '../../components/PostCard'; 
 import ClubCard from '../../components/ClubCard'; 
 
@@ -246,6 +246,19 @@ const Dashboard = () => {
     console.log(`Dashboard: Attempting to unfollow user with ID: ${userId}`);
     dispatch(unfollowUser(userId)); 
   };
+
+  // NEW: Handler for leaving a club from the Dashboard
+  const handleLeaveClubFromDashboard = async (clubId) => {
+    console.log(`Dashboard: Attempting to leave club with ID: ${clubId}`);
+    try {
+      await dispatch(leaveClub(clubId)).unwrap(); // Dispatch the leaveClub thunk
+      // The clubSlice's fulfilled reducer will update myClubs, causing re-render
+      console.log(`Successfully left club ${clubId}`);
+    } catch (error) {
+      console.error("Failed to leave club from dashboard:", error);
+      alert(`Failed to leave club: ${error.message || 'An error occurred.'}`); // Replace with a better UI message
+    }
+  };
   
   // Overall loading condition for the dashboard
   if (!user?.id && authLoading) { 
@@ -333,7 +346,12 @@ const Dashboard = () => {
         ) : (
           <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myClubs && myClubs.map(club => ( 
-              <ClubCard key={club.id} club={club} isJoined={true} /> 
+              <ClubCard 
+                key={club.id} 
+                club={club} 
+                isJoined={true} 
+                onLeave={() => handleLeaveClubFromDashboard(club.id)} // NEW: Pass onLeave handler
+              /> 
             ))}
           </div>
         )}
@@ -353,7 +371,6 @@ const Dashboard = () => {
               <li key={followedUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
                 <p className="text-white text-lg">@{followedUser.username}</p>
                 <button 
-                  // Use the leave-btn class directly for consistent red button styling
                   className="leave-btn" 
                   onClick={() => handleUnfollowFromDashboard(followedUser.id)}
                 >
