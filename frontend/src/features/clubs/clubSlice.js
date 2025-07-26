@@ -30,7 +30,6 @@ export const fetchMyClubs = createAsyncThunk(
       const token = getState().auth.token;
       const userId = getState().auth.user?.id; 
       if (!token || !userId) {
-        // Keeping Ian's more descriptive message
         return rejectWithValue('User not authenticated or ID missing. Cannot fetch user clubs.');
       }
       const response = await fetch(`${API_URL}/users/${userId}/clubs`, {
@@ -73,7 +72,7 @@ export const joinClub = createAsyncThunk(
   }
 );
 
-// Max's new feature: leaveClub thunk - INTEGRATED
+// Max's new feature: leaveClub thunk
 export const leaveClub = createAsyncThunk(
   'clubs/leaveClub',
   async (clubId, { rejectWithValue, getState }) => {
@@ -96,6 +95,28 @@ export const leaveClub = createAsyncThunk(
     }
   }
 );
+
+// NEW THUNK: Fetch details for a single club by ID
+export const fetchClubDetails = createAsyncThunk(
+  'clubs/fetchClubDetails',
+  async (clubId, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      // Assuming a backend route like GET /clubs/<club_id> exists
+      const response = await fetch(`${API_URL}/clubs/${clubId}`, { headers });
+      const data = await response.json();
+
+      if (!response.ok) return rejectWithValue(data.message || `Failed to fetch club with ID ${clubId}`);
+      return data; // Should be a single club object
+    } catch (error) {
+      return rejectWithValue(error.message || `Network error fetching club with ID ${clubId}`);
+    }
+  }
+);
+
 
 export const fetchClubPosts = createAsyncThunk(
   'clubs/fetchClubPosts',
@@ -145,10 +166,12 @@ const clubSlice = createSlice({
   initialState: {
     allClubs: [],
     myClubs: [],
+    currentClub: null, // NEW STATE: To store details of the currently viewed club
     currentClubPosts: [],
     isAllClubsLoading: false, 
     isMyClubsLoading: false,  
-    isLoading: false,         
+    isCurrentClubLoading: false, // NEW STATE: Loading flag for currentClub
+    isLoading: false,         // General loading for join/leave/createPost
     error: null,
     postCreationStatus: 'idle',
     postCreationError: null,
@@ -160,18 +183,25 @@ const clubSlice = createSlice({
     clearCurrentClubPosts: (state) => {
       state.currentClubPosts = [];
     },
+    // MODIFIED: clearCurrentClub to also clear currentClub object
+    clearCurrentClub: (state) => {
+      state.currentClub = null;
+      state.currentClubPosts = [];
+    },
     setPostCreationStatus: (state, action) => {
       state.postCreationStatus = action.payload;
     },
     clearPostCreationError: (state) => {
       state.postCreationError = null;
     },
-    resetClubState: (state) => { // Keep resetClubState
+    resetClubState: (state) => { 
       state.allClubs = [];
       state.myClubs = [];
+      state.currentClub = null; // Reset currentClub on full state reset
       state.currentClubPosts = [];
       state.isAllClubsLoading = false;
       state.isMyClubsLoading = false;
+      state.isCurrentClubLoading = false; // Reset currentClub loading on full state reset
       state.isLoading = false;
       state.error = null;
       state.postCreationStatus = 'idle';
@@ -208,25 +238,44 @@ const clubSlice = createSlice({
         state.isLoading = true; 
         state.error = null;
       })
-      .addCase(joinClub.fulfilled, (state, action) => { // Keep action parameter for consistency
+      .addCase(joinClub.fulfilled, (state, action) => { 
         state.isLoading = false; 
       })
       .addCase(joinClub.rejected, (state, action) => {
         state.isLoading = false; 
         state.error = action.payload;
       })
-      // Max's new feature: leaveClub extraReducer - INTEGRATED
       .addCase(leaveClub.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(leaveClub.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.myClubs = state.myClubs.filter(club => club.id !== action.payload); // Remove left club
+        state.myClubs = state.myClubs.filter(club => club.id !== action.payload); 
+        // If the user left the current club, clear currentClub
+        if (state.currentClub && state.currentClub.id === action.payload) {
+          state.currentClub = null;
+          state.currentClubPosts = [];
+        }
       })
       .addCase(leaveClub.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+      // NEW: Reducers for fetchClubDetails
+      .addCase(fetchClubDetails.pending, (state) => {
+        state.isCurrentClubLoading = true;
+        state.error = null; // Clear general error
+        state.currentClub = null; // Clear previous club data while loading new one
+      })
+      .addCase(fetchClubDetails.fulfilled, (state, action) => {
+        state.isCurrentClubLoading = false;
+        state.currentClub = action.payload; // Store the fetched club details
+      })
+      .addCase(fetchClubDetails.rejected, (state, action) => {
+        state.isCurrentClubLoading = false;
+        state.error = action.payload; // Set general error
+        state.currentClub = null; // Clear club data on error
       })
       .addCase(fetchClubPosts.pending, (state) => {
         state.isLoading = true; 
@@ -255,9 +304,11 @@ const clubSlice = createSlice({
         console.log("clubSlice: Handling logout, resetting club state.");
         state.allClubs = [];
         state.myClubs = [];
+        state.currentClub = null; // Reset currentClub on logout
         state.currentClubPosts = [];
         state.isAllClubsLoading = false;
         state.isMyClubsLoading = false;
+        state.isCurrentClubLoading = false; // Reset currentClub loading on logout
         state.isLoading = false;
         state.error = null;
         state.postCreationStatus = 'idle';
@@ -266,13 +317,14 @@ const clubSlice = createSlice({
   },
 });
 
-// Combine exports, ensuring resetClubState is included
+// Combine exports, ensuring new action clearCurrentClub is included
 export const { 
   clearClubError, 
   clearCurrentClubPosts, 
+  clearCurrentClub, // Export the new action
   setPostCreationStatus, 
   clearPostCreationError, 
-  resetClubState // Ensure this is exported
+  resetClubState 
 } = clubSlice.actions;
 
 export default clubSlice.reducer;

@@ -3,7 +3,6 @@ from .. import db
 from .__init__ import BaseModelMixin
 from .. import bcrypt
 
-# User class no longer inherits from SerializerMixin
 class User(BaseModelMixin, db.Model):
     __tablename__= 'users'
 
@@ -12,13 +11,11 @@ class User(BaseModelMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     _password_hash = db.Column(db.String, nullable=False)
 
-    # Relationships
     posts = db.relationship('Post', back_populates='author', lazy=True, cascade='all, delete-orphan')
     reviews = db.relationship('Review', back_populates='user', lazy=True, cascade='all, delete-orphan')
     clubs_created = db.relationship('Club', back_populates='creator', lazy=True, cascade='all, delete-orphan')
     club_memberships = db.relationship('ClubMember', back_populates='user', lazy=True, cascade='all, delete-orphan')
     
-    # For user-to-user following
     followers = db.relationship(
         'Follow',
         foreign_keys='Follow.followed_id',
@@ -34,8 +31,6 @@ class User(BaseModelMixin, db.Model):
         cascade='all, delete-orphan'
     )
     watchlists = db.relationship('Watchlist', back_populates='user', lazy=True, cascade='all, delete-orphan')
-
-    # Removed: serialize_rules attribute as SerializerMixin is no longer used
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -53,20 +48,16 @@ class User(BaseModelMixin, db.Model):
         return bcrypt.check_password_hash(
             self._password_hash, password.encode('utf-8'))
 
-    # Custom to_dict method to handle all serialization explicitly
     def to_dict(self, include_relationships=True):
-        # Manually include basic user attributes
         data = {
             'id': self.id,
             'username': self.username,
             'email': self.email,
-            # Do NOT include _password_hash directly
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
 
         if include_relationships:
-            # Manually serialize club_memberships to include specific club details
             data['club_memberships'] = [
                 {
                     'id': cm.club.id,
@@ -77,7 +68,6 @@ class User(BaseModelMixin, db.Model):
                 for cm in self.club_memberships
             ]
 
-            # Manually serialize clubs_created to include specific club details
             data['clubs_created'] = [
                 {
                     'id': club.id,
@@ -88,10 +78,23 @@ class User(BaseModelMixin, db.Model):
                 for club in self.clubs_created
             ]
             
-            # Manually serialize followers and following
-            # data['posts'] = [{'id': post.id, 'movie_title': post.movie_title} for post in self.posts]
-            # data['reviews'] = [{'id': review.id, 'rating': review.rating, 'movie_title': review.movie.title} for review in self.reviews]
-            # data['watchlists'] = [{'id': wl.id, 'movie_id': wl.movie_id, 'status': wl.status} for wl in self.watchlists]
+            # This is the crucial part for 'following'
+            data['following'] = [
+                {
+                    'id': follow_obj.followed.id,
+                    'username': follow_obj.followed.username,
+                    'email': follow_obj.followed.email # Include email for display if desired
+                }
+                for follow_obj in self.following # Assumes 'following' relationship returns Follow objects
+            ]
+            # This is the crucial part for 'followers'
+            data['followers'] = [
+                {
+                    'id': follow_obj.follower.id,
+                    'username': follow_obj.follower.username,
+                    'email': follow_obj.follower.email # Include email for display if desired
+                }
+                for follow_obj in self.followers # Assumes 'followers' relationship returns Follow objects
+            ]
 
         return data
-

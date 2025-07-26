@@ -4,13 +4,14 @@ from .. import db
 from ..models.user import User
 from ..models.club_member import ClubMember 
 from ..models.club import Club 
-import re # For password validation
+from ..models.follow import Follow 
+import re 
 
 # Create a Blueprint for user routes. 
 user_bp = Blueprint('user_bp', __name__)
 
 # Route to get user details
-@user_bp.route('/<int:user_id>', methods=['GET'])
+@user_bp.route('/users/<int:user_id>', methods=['GET'])
 @jwt_required()
 def get_user_details(user_id):
     """
@@ -23,12 +24,11 @@ def get_user_details(user_id):
     if not user:
         return jsonify({"message": "User not found"}), 404
     
-    # Debug log for GET request
     print(f"Backend: Serving GET request for user {user_id}. User data: {user.to_dict()}")
     return make_response(jsonify(user.to_dict()), 200)
 
 # Route to update user details
-@user_bp.route('/<int:user_id>', methods=['PUT'])
+@user_bp.route('/users/<int:user_id>', methods=['PUT'])
 @jwt_required()
 def update_user_details(user_id):
     """
@@ -38,7 +38,6 @@ def update_user_details(user_id):
     """
     current_user_id = get_jwt_identity()
 
-    # Ensure the authenticated user is trying to update their own profile
     if current_user_id != user_id:
         return jsonify({'message': 'Unauthorized: You can only update your own profile'}), 403
 
@@ -50,46 +49,40 @@ def update_user_details(user_id):
     print(f"Backend: Received PUT request for user {user_id}. Data: {data}") 
     print(f"Backend: Current user object before update: {user.username}, {user.email}, {user._password_hash[:10]}...") 
 
-    # Update username if provided and unique (and different from current)
     if 'username' in data:
         new_username = data['username'].strip()
         if not new_username:
             return jsonify({'message': 'Username cannot be empty'}), 400
         
-        # Check if username is already taken by another user (excluding current user)
         if new_username != user.username and User.query.filter(User.username == new_username).first():
             return jsonify({'message': 'Username already taken'}), 409
         user.username = new_username
         print(f"Backend: Updating username to {new_username}") 
 
-    # Update email if provided and unique (and different from current)
     if 'email' in data:
         new_email = data['email'].strip()
         if not new_email:
             return jsonify({'message': 'Email cannot be empty'}), 400
 
-        # Check if email is already taken by another user (excluding current user)
         if new_email != user.email and User.query.filter(User.email == new_email).first():
             return jsonify({'message': 'Email already taken'}), 409
         user.email = new_email
         print(f"Backend: Updating email to {new_email}") 
 
-    # Update password if provided - with stricter validation
     if 'password' in data:
         new_password = data['password']
-        # Stricter password validation
         if not new_password:
             return jsonify({'message': 'Password cannot be empty'}), 400
-        if len(new_password) < 5: # At least 5 characters
+        if len(new_password) < 5: 
             return jsonify({'message': 'Password must be at least 5 characters long'}), 400
-        if not re.search(r'[A-Z]', new_password): # At least one capital letter
+        if not re.search(r'[A-Z]', new_password): 
             return jsonify({'message': 'Password must contain at least one capital letter'}), 400
-        if not re.search(r'[a-z]', new_password): # At least one small letter
+        if not re.search(r'[a-z]', new_password): 
             return jsonify({'message': 'Password must contain at least one small letter'}), 400
-        if not re.search(r'[0-9]', new_password): # At least one number
+        if not re.search(r'[0-9]', new_password): 
             return jsonify({'message': 'Password must contain at least one number'}), 400
         
-        user.password_hash = new_password # Use the hybrid property setter
+        user.password_hash = new_password 
         print(f"Backend: Attempting to update password for user {user.username}") 
         print(f"Backend: Password hash setter called. New hash (partial): {user._password_hash[:10]}...") 
 
@@ -103,8 +96,8 @@ def update_user_details(user_id):
         print(f"Backend ERROR: Failed to update user {user.username}. Error: {str(e)}") 
         return jsonify({'message': f'Error updating user: {str(e)}'}), 500
 
-# Route to get clubs a user has joined (moved here for organization)
-@user_bp.route('/<int:user_id>/clubs', methods=['GET'])
+# Route to get clubs a user has joined
+@user_bp.route('/users/<int:user_id>/clubs', methods=['GET'])
 @jwt_required()
 def get_user_clubs(user_id):
     """
@@ -125,3 +118,111 @@ def get_user_clubs(user_id):
     
     return jsonify(joined_clubs), 200
 
+# Route to get users that a specific user is following
+@user_bp.route('/users/<int:user_id>/following', methods=['GET']) 
+@jwt_required()
+def get_user_following(user_id):
+    """
+    Retrieves the list of users that a specific user is following.
+    Requires authentication.
+    """
+    current_user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    following_users_data = []
+    for followed_user_obj in user.following: 
+        followed_user = followed_user_obj.followed 
+        following_users_data.append({
+            'id': followed_user.id,
+            'username': followed_user.username,
+            'email': followed_user.email 
+        })
+    
+    return jsonify(following_users_data), 200
+
+# Route to follow a user
+@user_bp.route('/users/<int:user_id>/follow', methods=['POST'])
+@jwt_required()
+def follow_user(user_id):
+    """
+    Allows the authenticated user to follow another user.
+    """
+    current_user_id = get_jwt_identity()
+    
+    follower = User.query.get(current_user_id)
+    followed = User.query.get(user_id)
+
+    if not follower or not followed:
+        return jsonify({'message': 'User not found'}), 404
+
+    if follower.id == followed.id:
+        return jsonify({'message': 'You cannot follow yourself'}), 400
+
+    existing_follow = Follow.query.filter_by(follower_id=follower.id, followed_id=followed.id).first()
+    if existing_follow:
+        return jsonify({'message': 'Already following this user'}), 409 
+
+    new_follow = Follow(follower_id=follower.id, followed_id=followed.id)
+    db.session.add(new_follow)
+    db.session.commit()
+
+    return jsonify({'message': f'You are now following {followed.username}'}), 201 
+
+# Route to unfollow a user
+@user_bp.route('/users/<int:user_id>/unfollow', methods=['POST']) 
+@jwt_required()
+def unfollow_user(user_id):
+    """
+    Allows the authenticated user to unfollow another user.
+    """
+    current_user_id = get_jwt_identity()
+    
+    follower = User.query.get(current_user_id)
+    followed = User.query.get(user_id)
+
+    if not follower or not followed:
+        return jsonify({'message': 'User not found'}), 404
+
+    if follower.id == followed.id:
+        return jsonify({'message': 'You cannot unfollow yourself'}), 400
+
+    follow_to_delete = Follow.query.filter_by(follower_id=follower.id, followed_id=followed.id).first()
+
+    if not follow_to_delete:
+        return jsonify({'message': 'Not currently following this user'}), 404
+
+    db.session.delete(follow_to_delete)
+    db.session.commit()
+
+    return jsonify({'message': f'You have unfollowed {followed.username}'}), 200
+
+# NEW ROUTE: Get users that are following a specific user (followers)
+@user_bp.route('/users/<int:user_id>/followers', methods=['GET'])
+@jwt_required()
+def get_user_followers(user_id):
+    """
+    Retrieves the list of users who are following a specific user.
+    Requires authentication.
+    """
+    current_user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    # The 'followers' relationship on the User model is defined in models/user.py
+    # It should correctly return Follow objects where this user is the 'followed' party.
+    follower_users_data = []
+    for follower_obj in user.followers: 
+        # Access the 'follower' User object from the Follow object
+        follower_user = follower_obj.follower 
+        follower_users_data.append({
+            'id': follower_user.id,
+            'username': follower_user.username,
+            'email': follower_user.email 
+        })
+    
+    return jsonify(follower_users_data), 200
