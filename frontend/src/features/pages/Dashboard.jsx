@@ -120,7 +120,7 @@ const Dashboard = () => {
   const {
     user,
     isAuthenticated,
-    isLoading: authLoading, // This is the global auth loading
+    isLoading: authLoading,
     error: authError,
     following,
     isFollowingLoading,
@@ -129,7 +129,7 @@ const Dashboard = () => {
     isFollowersLoading,
     followersError,
     userPosts,
-    isUserPostsLoading, // NEW: Get dedicated user posts loading state
+    isUserPostsLoading,
     hasFetchedUserPosts,
   } = useSelector((state) => state.auth);
   const { myClubs, isMyClubsLoading, error: clubsError } = useSelector((state) => state.clubs);
@@ -141,7 +141,7 @@ const Dashboard = () => {
   useEffect(() => {
     console.log("Dashboard Render - user state:", user);
     console.log("Dashboard Render - isAuthenticated:", isAuthenticated);
-    console.log("Dashboard Render - auth isLoading (global):", authLoading); // Log global loading
+    console.log("Dashboard Render - auth isLoading (global):", authLoading);
     console.log("Dashboard Render - auth error:", authError);
     console.log("Dashboard Render - myClubs count:", myClubs ? myClubs.length : 0);
     console.log("Dashboard Render - isMyClubsLoading:", isMyClubsLoading);
@@ -152,7 +152,7 @@ const Dashboard = () => {
     console.log("Dashboard Render - isFollowersLoading:", isFollowersLoading);
     console.log("Dashboard Render - followersError:", followersError);
     console.log("Dashboard Render - userPosts count:", userPosts ? userPosts.length : 0);
-    console.log("Dashboard Render - isUserPostsLoading (dedicated):", isUserPostsLoading); // Log dedicated loading
+    console.log("Dashboard Render - isUserPostsLoading (dedicated):", isUserPostsLoading);
     console.log("Dashboard Render - hasFetchedUserPosts:", hasFetchedUserPosts);
     console.log("Dashboard Render - hasLoadedInitialData:", hasLoadedInitialData);
   }, [user, isAuthenticated, authLoading, authError, myClubs, isMyClubsLoading, following, isFollowingLoading, followingError, followers, isFollowersLoading, followersError, userPosts, isUserPostsLoading, hasFetchedUserPosts, hasLoadedInitialData]);
@@ -169,7 +169,7 @@ const Dashboard = () => {
         let shouldFetchMyClubs = !isMyClubsLoading && (!myClubs || myClubs.length === 0);
         let shouldFetchFollowing = !isFollowingLoading && (!following || following.length === 0);
         let shouldFetchFollowers = !isFollowersLoading && (!followers || followers.length === 0);
-        let shouldFetchUserPosts = !isUserPostsLoading && !hasFetchedUserPosts; // Use dedicated loading flag
+        let shouldFetchUserPosts = !isUserPostsLoading && !hasFetchedUserPosts;
 
         console.log(`   Should fetch user profile: ${shouldFetchUserProfile}`);
         console.log(`   Should fetch my clubs: ${shouldFetchMyClubs}`);
@@ -226,7 +226,7 @@ const Dashboard = () => {
     isFollowersLoading,
     followers,
     userPosts,
-    isUserPostsLoading, // Use dedicated loading state here
+    isUserPostsLoading,
     hasFetchedUserPosts,
     hasLoadedInitialData,
     authLoading,
@@ -269,8 +269,14 @@ const Dashboard = () => {
     }
   };
 
+  // Sort userPosts by created_at in descending order (newest first)
+  const sortedUserPosts = [...userPosts].sort((a, b) => {
+    const dateA = new Date(a.created_at);
+    const dateB = new Date(b.created_at);
+    return dateB - dateA; // Descending order
+  });
+
   // Overall loading condition for the dashboard
-  // Only show global loading if user data is genuinely missing and still loading from initial auth check
   if (!user?.id && authLoading) {
     return (
       <div className="dashboard-loading p-6 bg-gray-900 min-h-screen text-white flex items-center justify-center">
@@ -335,13 +341,13 @@ const Dashboard = () => {
 
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Posts</h2>
-        {isUserPostsLoading && userPosts.length === 0 ? ( // Use dedicated loading for user posts
+        {isUserPostsLoading && sortedUserPosts.length === 0 ? (
             <p className="text-blue-400 text-center">Loading your posts...</p>
-        ) : userPosts.length === 0 ? (
+        ) : sortedUserPosts.length === 0 ? (
           <p className="text-gray-400">You haven’t created any posts yet.</p>
         ) : (
           <div className="feed-list">
-            {userPosts.map(post => (
+            {sortedUserPosts.map(post => ( // Use sortedUserPosts here
               <PostCard key={post.id} post={post} />
             ))}
           </div>
@@ -396,7 +402,7 @@ const Dashboard = () => {
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Followers</h2>
         {isFollowersLoading ? (
-            <p className="text-blue-400 text-center">Loading your followers...</p>
+            <p className className="text-blue-400 text-center">Loading your followers...</p>
         ) : followersError ? (
             <p className="text-red-500 text-center">Error loading followers list: {followersError}</p>
         ) : followers.length === 0 ? (
