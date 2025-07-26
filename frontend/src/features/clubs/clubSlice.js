@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { logout, fetchUserPosts } from '../auth/authSlice'; // MODIFIED: Import fetchUserPosts
+import { logout, fetchUserPosts } from '../auth/authSlice';
 
 const API_URL = 'http://127.0.0.1:5000';
 
@@ -88,7 +88,7 @@ export const leaveClub = createAsyncThunk(
       });
       const data = await response.json();
       if (!response.ok) return rejectWithValue(data.message || 'Failed to leave club');
-      return clubId; // Return clubId to filter it out from myClubs state
+      return clubId;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error leaving club');
     }
@@ -107,7 +107,7 @@ export const fetchClubDetails = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) return rejectWithValue(data.message || `Failed to fetch club with ID ${clubId}`);
-      return data; // Should be a single club object
+      return data;
     } catch (error) {
       return rejectWithValue(error.message || `Network error fetching club with ID ${clubId}`);
     }
@@ -157,36 +157,56 @@ export const createPost = createAsyncThunk(
   }
 );
 
-// NEW THUNK: Delete a post
 export const deletePost = createAsyncThunk(
-  'clubs/deletePost', // Naming it in clubs slice for now
-  async (postId, { rejectWithValue, getState, dispatch }) => { // Added dispatch
+  'clubs/deletePost',
+  async (postId, { rejectWithValue, getState, dispatch }) => {
     try {
       const token = getState().auth.token;
       if (!token) return rejectWithValue('Authentication required to delete a post.');
 
       const response = await fetch(`${API_URL}/posts/${postId}`, {
-        method: 'DELETE', // Use DELETE method
+        method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
-      const data = await response.json(); // Even for 200 OK, backend might send a message
+      const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to delete post');
       }
 
-      // After successful deletion, refresh user's posts for Dashboard
       const userId = getState().auth.user?.id;
       if (userId) {
         dispatch(fetchUserPosts(userId));
       }
 
-      return postId; // Return the ID of the deleted post for state update
+      return postId;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error deleting post');
+    }
+  }
+);
+
+// NEW THUNK: Fetch all posts for the main feed
+export const fetchFeedPosts = createAsyncThunk(
+  'clubs/fetchFeedPosts',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_URL}/posts/feed`, { headers });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.message || 'Failed to fetch feed posts');
+      }
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Network error fetching feed posts');
     }
   }
 );
@@ -200,15 +220,18 @@ const clubSlice = createSlice({
     myClubs: [],
     currentClub: null,
     currentClubPosts: [],
+    feedPosts: [], // NEW STATE: To store posts for the main feed
     isAllClubsLoading: false,
     isMyClubsLoading: false,
     isCurrentClubLoading: false,
-    isLoading: false, // General loading for join/leave/createPost (and now deletePost)
+    isLoading: false,
     error: null,
     postCreationStatus: 'idle',
     postCreationError: null,
-    postDeletionStatus: 'idle', // NEW: Status for post deletion
-    postDeletionError: null,    // NEW: Error for post deletion
+    postDeletionStatus: 'idle',
+    postDeletionError: null,
+    isFeedPostsLoading: false, // NEW STATE: Loading flag for feed posts
+    feedPostsError: null,      // NEW STATE: Error for feed posts
   },
   reducers: {
     clearClubError: (state) => {
@@ -227,10 +250,10 @@ const clubSlice = createSlice({
     clearPostCreationError: (state) => {
       state.postCreationError = null;
     },
-    setPostDeletionStatus: (state, action) => { // NEW: Reducer for deletion status
+    setPostDeletionStatus: (state, action) => {
       state.postDeletionStatus = action.payload;
     },
-    clearPostDeletionError: (state) => { // NEW: Reducer for deletion error
+    clearPostDeletionError: (state) => {
       state.postDeletionError = null;
     },
     resetClubState: (state) => {
@@ -238,6 +261,7 @@ const clubSlice = createSlice({
       state.myClubs = [];
       state.currentClub = null;
       state.currentClubPosts = [];
+      state.feedPosts = [];
       state.isAllClubsLoading = false;
       state.isMyClubsLoading = false;
       state.isCurrentClubLoading = false;
@@ -245,8 +269,10 @@ const clubSlice = createSlice({
       state.error = null;
       state.postCreationStatus = 'idle';
       state.postCreationError = null;
-      state.postDeletionStatus = 'idle'; // Reset deletion status
-      state.postDeletionError = null;    // Reset deletion error
+      state.postDeletionStatus = 'idle';
+      state.postDeletionError = null;
+      state.isFeedPostsLoading = false;
+      state.feedPostsError = null;
     }
   },
   extraReducers: (builder) => {
@@ -339,7 +365,6 @@ const clubSlice = createSlice({
         state.postCreationStatus = 'failed';
         state.postCreationError = action.payload;
       })
-      // NEW: Reducers for deletePost
       .addCase(deletePost.pending, (state) => {
         state.postDeletionStatus = 'pending';
         state.postDeletionError = null;
@@ -347,13 +372,25 @@ const clubSlice = createSlice({
       .addCase(deletePost.fulfilled, (state, action) => {
         state.postDeletionStatus = 'succeeded';
         const deletedPostId = action.payload;
-        // Remove from currentClubPosts if present
         state.currentClubPosts = state.currentClubPosts.filter(post => post.id !== deletedPostId);
-        // The fetchUserPosts dispatch in the thunk will handle updating userPosts in authSlice
+        state.feedPosts = state.feedPosts.filter(post => post.id !== deletedPostId);
       })
       .addCase(deletePost.rejected, (state, action) => {
         state.postDeletionStatus = 'failed';
         state.postDeletionError = action.payload;
+      })
+      // NEW: Reducers for fetchFeedPosts
+      .addCase(fetchFeedPosts.pending, (state) => {
+        state.isFeedPostsLoading = true;
+        state.feedPostsError = null;
+      })
+      .addCase(fetchFeedPosts.fulfilled, (state, action) => {
+        state.isFeedPostsLoading = false;
+        state.feedPosts = action.payload;
+      })
+      .addCase(fetchFeedPosts.rejected, (state, action) => {
+        state.isFeedPostsLoading = false;
+        state.feedPostsError = action.payload;
       })
       .addCase(logout, (state) => {
         console.log("clubSlice: Handling logout, resetting club state.");
@@ -361,6 +398,7 @@ const clubSlice = createSlice({
         state.myClubs = [];
         state.currentClub = null;
         state.currentClubPosts = [];
+        state.feedPosts = [];
         state.isAllClubsLoading = false;
         state.isMyClubsLoading = false;
         state.isCurrentClubLoading = false;
@@ -368,8 +406,10 @@ const clubSlice = createSlice({
         state.error = null;
         state.postCreationStatus = 'idle';
         state.postCreationError = null;
-        state.postDeletionStatus = 'idle'; // Reset deletion status on logout
-        state.postDeletionError = null;    // Reset deletion error on logout
+        state.postDeletionStatus = 'idle';
+        state.postDeletionError = null;
+        state.isFeedPostsLoading = false;
+        state.feedPostsError = null;
       });
   },
 });
@@ -380,8 +420,8 @@ export const {
   clearCurrentClub,
   setPostCreationStatus,
   clearPostCreationError,
-  setPostDeletionStatus, // NEW: Export new action
-  clearPostDeletionError, // NEW: Export new action
+  setPostDeletionStatus,
+  clearPostDeletionError,
   resetClubState
 } = clubSlice.actions;
 

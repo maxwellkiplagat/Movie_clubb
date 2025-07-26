@@ -8,7 +8,7 @@ from ..models.user import User
 post_bp = Blueprint('post_bp', __name__)
 
 # Route to get all posts for a specific club
-@post_bp.route('/posts/clubs/<int:club_id>/posts', methods=['GET']) # MODIFIED
+@post_bp.route('/posts/clubs/<int:club_id>/posts', methods=['GET'])
 def get_club_posts(club_id):
     """
     Retrieves all posts for a specific club, ordered by creation date (newest first).
@@ -21,7 +21,7 @@ def get_club_posts(club_id):
     return jsonify([post.to_dict() for post in posts]), 200
 
 # Route to create a new post in a specific club
-@post_bp.route('/posts/clubs/<int:club_id>/posts', methods=['POST']) # MODIFIED
+@post_bp.route('/posts/clubs/<int:club_id>/posts', methods=['POST'])
 @jwt_required()
 def create_club_post(club_id):
     """
@@ -54,7 +54,7 @@ def create_club_post(club_id):
     return jsonify(new_post.to_dict()), 201
 
 # Manual OPTIONS handler for /posts/<int:post_id>
-@post_bp.route('/posts/<int:post_id>', methods=['OPTIONS']) # MODIFIED
+@post_bp.route('/posts/<int:post_id>', methods=['OPTIONS'])
 def options_post(post_id):
     """
     Handles CORS preflight requests for the /posts/<int:post_id> route.
@@ -69,7 +69,7 @@ def options_post(post_id):
 
 
 # Route to delete a post by ID
-@post_bp.route('/posts/<int:post_id>', methods=['DELETE']) # MODIFIED
+@post_bp.route('/posts/<int:post_id>', methods=['DELETE'])
 @jwt_required()
 def delete_post(post_id):
     """
@@ -93,3 +93,17 @@ def delete_post(post_id):
         db.session.rollback()
         print(f"Error deleting post {post_id}: {e}")
         return jsonify({"message": "An error occurred while deleting the post"}), 500
+
+# NEW ROUTE: Get all posts for the main feed
+@post_bp.route('/posts/feed', methods=['GET'])
+@jwt_required() # Assuming feed requires authentication
+def get_feed_posts():
+    """
+    Retrieves all posts for the main feed, ordered by creation date (newest first).
+    Requires authentication.
+    """
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    
+    feed_posts_data = [post.to_dict() for post in posts]
+    
+    return jsonify(feed_posts_data), 200

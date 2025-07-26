@@ -6,19 +6,19 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from flask_cors import CORS
+from flask_cors import CORS # Keep this import
 from datetime import timedelta
 import traceback
 
 load_dotenv()
 
-# Initialize extensions
+# Initialize extensions (only those that don't take 'app' directly)
 db = SQLAlchemy()
 api = Api()
 bcrypt = Bcrypt()
 jwt = JWTManager()
 migrate = Migrate()
-cors = CORS()
+# REMOVED: cors = CORS() # We will initialize CORS directly with the app
 
 def create_app():
     # Create and configure the Flask application
@@ -29,13 +29,16 @@ def create_app():
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
-    # Initialize extensions with the app
+    # NEW: Initialize CORS directly with the app instance here
+    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+
+    # Initialize other extensions with the app
     db.init_app(app)
     api.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+    # REMOVED: cors.init_app(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 
     # Import models to ensure they are registered with SQLAlchemy
     from .models.user import User
@@ -82,7 +85,7 @@ def create_app():
     app.register_blueprint(club_bp, url_prefix='/clubs')
 
     from .routes.post_routes import post_bp
-    app.register_blueprint(post_bp, url_prefix='') # MODIFIED: Changed url_prefix to empty string
+    app.register_blueprint(post_bp, url_prefix='') 
 
     from .routes.user_routes import user_bp
     app.register_blueprint(user_bp, url_prefix='') 
