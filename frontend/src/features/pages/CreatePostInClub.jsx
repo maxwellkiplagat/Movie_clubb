@@ -3,48 +3,78 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   createPost,
-  setPostCreationStatus, 
-  clearPostCreationError, 
-} from '../clubs/clubSlice'; 
+  setPostCreationStatus,
+  clearPostCreationError,
+} from '../clubs/clubSlice';
+import { fetchUserPosts } from '../auth/authSlice';
 
 function CreatePostInClub() {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [movieTitle, setMovieTitle] = useState('');
   const [content, setContent] = useState('');
-  const [message, setMessage] = useState(null); 
+  const [localMessage, setLocalMessage] = useState(null);
+  const [isPostSuccessDisplayed, setIsPostSuccessDisplayed] = useState(false); // NEW: State to control success display/navigation
 
-  // Get post creation status and error from Redux store
   const { postCreationStatus, postCreationError } = useSelector((state) => state.clubs);
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
-  // Effect to handle post creation status feedback
+  // Effect to handle post creation status (Redux state)
   useEffect(() => {
+    console.log("CreatePostInClub useEffect [postCreationStatus]: Status changed to:", postCreationStatus);
+
     if (postCreationStatus === 'succeeded') {
-      setMessage('Post created successfully!');
-      // Reset status after a short delay for user to see message
-      const timer = setTimeout(() => {
-        dispatch(setPostCreationStatus('idle')); 
-        setMessage(null);
-        navigate(`/clubs/${id}`); 
-      }, 1500); // Show success message for 1.5 seconds
-      return () => clearTimeout(timer); 
+      // Immediately reset Redux status to 'idle' to prevent re-triggering this effect
+      dispatch(setPostCreationStatus('idle'));
+
+      // Trigger the local success message display and navigation flow
+      setIsPostSuccessDisplayed(true);
+
+      // Dispatch fetchUserPosts to update the dashboard's 'My Posts' section
+      if (user?.id) {
+        console.log("CreatePostInClub useEffect [postCreationStatus]: Dispatching fetchUserPosts to update dashboard.");
+        dispatch(fetchUserPosts(user.id));
+      }
+
     } else if (postCreationStatus === 'failed') {
-      setMessage(`Error: ${postCreationError || 'Failed to create post.'}`);
-      // Clear error after a short delay or user interaction
+      setLocalMessage(`Error: ${postCreationError || 'Failed to create post.'}`);
       const timer = setTimeout(() => {
+        console.log("CreatePostInClub useEffect [postCreationStatus]: Clearing post creation error and local message.");
         dispatch(clearPostCreationError());
-        setMessage(null);
-      }, 5000); // Show error for 5 seconds
+        setLocalMessage(null);
+      }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [postCreationStatus, postCreationError, dispatch, id, navigate]);
+  }, [postCreationStatus, postCreationError, dispatch, user?.id]); // Removed id, navigate from dependencies here
 
-  // Redirect if not authenticated
+  // NEW Effect for handling local success message display and navigation (triggered by isPostSuccessDisplayed)
+  useEffect(() => {
+    if (isPostSuccessDisplayed) {
+      console.log("CreatePostInClub useEffect [isPostSuccessDisplayed]: Post success detected. Displaying message and setting navigation timer.");
+      setLocalMessage('Post created successfully!'); // Set local message for display
+
+      const timer = setTimeout(() => {
+        console.log("CreatePostInClub useEffect [isPostSuccessDisplayed]: Inside setTimeout - preparing to navigate.");
+        setLocalMessage(null); // Clear message before navigating
+        setIsPostSuccessDisplayed(false); // Reset this flag to allow future posts
+        console.log(`CreatePostInClub useEffect [isPostSuccessDisplayed]: Navigating to /clubs/${id}`);
+        navigate(`/clubs/${id}`); // Perform navigation
+        console.log("CreatePostInClub useEffect [isPostSuccessDisplayed]: Navigation call executed.");
+      }, 1500); // Display message for 1.5 seconds
+
+      return () => {
+        console.log("CreatePostInClub useEffect [isPostSuccessDisplayed]: Cleaning up setTimeout.");
+        clearTimeout(timer); // Cleanup timeout
+      };
+    }
+  }, [isPostSuccessDisplayed, id, navigate]); // Dependencies for this new effect
+
+  // Effect for authentication redirect (remains separate)
   useEffect(() => {
     if (!isAuthenticated) {
+      console.log("CreatePostInClub useEffect [isAuthenticated]: Not authenticated, redirecting to login.");
       sessionStorage.setItem('redirectAfterLogin', `/clubs/${id}/create-post`);
       navigate('/login');
     }
@@ -52,20 +82,23 @@ function CreatePostInClub() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null); 
+    setLocalMessage(null); // Clear any previous local message on new submission
+    setIsPostSuccessDisplayed(false); // Reset this flag on new submission
 
     if (!movieTitle || !content) {
-      setMessage('Please fill in both movie title and your thoughts.');
+      setLocalMessage('Please fill in both movie title and your thoughts.');
       return;
     }
 
+    console.log("CreatePostInClub handleSubmit: Attempting to dispatch createPost.");
     try {
-      // Dispatch the createPost thunk
       await dispatch(createPost({ clubId: parseInt(id), movie_title: movieTitle, content: content })).unwrap();
+      console.log("CreatePostInClub handleSubmit: createPost thunk resolved successfully. isPostSuccessDisplayed useEffect will handle next steps.");
     } catch (err) {
-      console.error('Failed to create post:', err);
+      console.error('CreatePostInClub handleSubmit: Failed to create post:', err);
     }
   };
+
   return (
     <div className="form-page min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
       <form
@@ -74,9 +107,10 @@ function CreatePostInClub() {
       >
         <h2 className="text-2xl font-bold text-orange-400 mb-6 text-center">Create Post in Club #{id}</h2>
 
-        {message && (
-          <p className={`text-center mb-4 ${postCreationStatus === 'succeeded' ? 'text-green-500' : 'text-red-500'}`}>
-            {message}
+        {/* Display local message (success or error) */}
+        {localMessage && (
+          <p className={`text-center mb-4 ${isPostSuccessDisplayed ? 'text-green-500' : 'text-red-500'}`}>
+            {localMessage}
           </p>
         )}
 
@@ -91,7 +125,7 @@ function CreatePostInClub() {
             value={movieTitle}
             onChange={(e) => setMovieTitle(e.target.value)}
             required
-            disabled={postCreationStatus === 'pending'} // Disable while submitting
+            disabled={postCreationStatus === 'pending'}
           />
         </div>
 
@@ -105,13 +139,12 @@ function CreatePostInClub() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
-            disabled={postCreationStatus === 'pending'} 
+            disabled={postCreationStatus === 'pending'}
           />
         </div>
 
         <button
           type="submit"
-          // Changed double quotes to backticks for template literal
           className={`
             bg-blue-600 hover:bg-blue-700
             text-white font-bold
@@ -121,7 +154,7 @@ function CreatePostInClub() {
             transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75
             ${postCreationStatus === 'pending' ? 'opacity-50 cursor-not-allowed' : ''}
           `}
-          disabled={postCreationStatus === 'pending'} 
+          disabled={postCreationStatus === 'pending'}
         >
           {postCreationStatus === 'pending' ? 'Submitting...' : 'Submit Post'}
         </button>

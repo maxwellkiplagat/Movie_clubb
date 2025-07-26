@@ -29,8 +29,8 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (userData, { rejectWithValue }) => {
     try {
-      console.log("loginUser Thunk: Attempting to log in."); 
-      console.log("loginUser Thunk: User data:", userData); 
+      console.log("loginUser Thunk: Attempting to log in.");
+      console.log("loginUser Thunk: User data:", userData);
       console.log("loginUser Thunk: API URL:", `${API_URL}/auth/login`);
 
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -40,8 +40,8 @@ export const loginUser = createAsyncThunk(
       });
 
       const data = await response.json();
-      console.log("loginUser Thunk: Response data:", data); 
-      console.log("loginUser Thunk: Response OK:", response.ok); 
+      console.log("loginUser Thunk: Response data:", data);
+      console.log("loginUser Thunk: Response OK:", response.ok);
 
       if (!response.ok) {
         return rejectWithValue(data.message || 'Login failed');
@@ -51,9 +51,9 @@ export const loginUser = createAsyncThunk(
         localStorage.setItem('jwt_token', data.access_token);
       }
 
-      return { ...data, id: data.user_id }; 
+      return { ...data, id: data.user_id };
     } catch (error) {
-      console.error("loginUser Thunk: Catch block error:", error); 
+      console.error("loginUser Thunk: Catch block error:", error);
       return rejectWithValue(error.message || 'Network error during login');
     }
   }
@@ -74,13 +74,13 @@ export const checkSession = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) {
-        localStorage.removeItem('jwt_token'); 
+        localStorage.removeItem('jwt_token');
         return rejectWithValue(data.message || 'Session invalid');
       }
 
-      return { ...data, id: data.user_id }; 
+      return { ...data, id: data.user_id };
     } catch (error) {
-      localStorage.removeItem('jwt_token'); 
+      localStorage.removeItem('jwt_token');
       return rejectWithValue(error.message || 'Network error during session check');
     }
   }
@@ -90,16 +90,16 @@ export const fetchUserProfile = createAsyncThunk(
   'auth/fetchUserProfile',
   async (userId, { rejectWithValue, getState }) => {
     try {
-      const token = getState().auth.token || localStorage.getItem('jwt_token'); 
+      const token = getState().auth.token || localStorage.getItem('jwt_token');
       if (!token) {
         return rejectWithValue('Authentication required to fetch profile.');
       }
 
       const response = await fetch(`${API_URL}/users/${userId}`, {
         method: 'GET',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
       });
 
@@ -108,7 +108,7 @@ export const fetchUserProfile = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to fetch user profile');
       }
-      return { ...data, id: data.id || data.user_id }; 
+      return { ...data, id: data.id || data.user_id };
     } catch (error) {
       return rejectWithValue(error.message || 'Network error fetching user profile');
     }
@@ -119,16 +119,16 @@ export const updateUserProfile = createAsyncThunk(
   'auth/updateUserProfile',
   async ({ userId, userData }, { rejectWithValue, getState }) => {
     try {
-      const token = getState().auth.token || localStorage.getItem('jwt_token'); 
+      const token = getState().auth.token || localStorage.getItem('jwt_token');
       if (!token) {
         return rejectWithValue('Authentication required to update profile.');
       }
 
       const response = await fetch(`${API_URL}/users/${userId}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(userData),
       });
@@ -138,7 +138,7 @@ export const updateUserProfile = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to update user profile');
       }
-      return { ...data, id: data.id || data.user_id }; 
+      return { ...data, id: data.id || data.user_id };
     } catch (error) {
       return rejectWithValue(error.message || 'Network error updating user profile');
     }
@@ -157,7 +157,7 @@ export const fetchUserPosts = createAsyncThunk(
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, 
+          'Authorization': `Bearer ${token}`,
         },
       });
       const data = await response.json();
@@ -218,7 +218,7 @@ export const followUser = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to follow user');
       }
-      return { id: userIdToFollow, username: data.username || 'Unknown' }; 
+      return { id: userIdToFollow, username: data.username || 'Unknown' };
     } catch (error) {
       return rejectWithValue(error.message || 'Network error following user');
     }
@@ -245,7 +245,7 @@ export const unfollowUser = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to unfollow user');
       }
-      return userIdToUnfollow; 
+      return userIdToUnfollow;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error unfollowing user');
     }
@@ -284,32 +284,35 @@ const authSlice = createSlice({
   name: 'auth',
   initialState: {
     user: null,
-    token: localStorage.getItem('jwt_token') || null, 
+    token: localStorage.getItem('jwt_token') || null,
     isAuthenticated: !!localStorage.getItem('jwt_token'),
-    isLoading: false,
+    isLoading: false, // Global loading for auth operations like login, register, checkSession, profile update
     error: null,
-    userPosts: [], 
-    hasFetchedUserPosts: false, 
-    following: [], 
-    isFollowingLoading: false, 
-    followingError: null, 
-    followers: [], 
-    isFollowersLoading: false, 
-    followersError: null, 
+    userPosts: [],
+    isUserPostsLoading: false, // NEW: Dedicated loading state for user posts
+    hasFetchedUserPosts: false,
+    following: [],
+    isFollowingLoading: false,
+    followingError: null,
+    followers: [],
+    isFollowersLoading: false,
+    followersError: null,
   },
   reducers: {
     logout: (state) => {
-      localStorage.removeItem('jwt_token'); 
+      localStorage.removeItem('jwt_token');
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.isLoading = false; // Reset global loading on logout
       state.error = null;
-      state.userPosts = []; 
-      state.hasFetchedUserPosts = false; 
-      state.following = []; 
+      state.userPosts = [];
+      state.isUserPostsLoading = false; // Reset dedicated loading on logout
+      state.hasFetchedUserPosts = false;
+      state.following = [];
       state.isFollowingLoading = false;
       state.followingError = null;
-      state.followers = []; 
+      state.followers = [];
       state.isFollowersLoading = false;
       state.followersError = null;
     },
@@ -324,29 +327,29 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(registerUser.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true; // Use global loading
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state) => {
-        state.isLoading = false;
+        state.isLoading = false; // Use global loading
       })
       .addCase(registerUser.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; // Use global loading
         state.error = action.payload;
       })
 
       .addCase(loginUser.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true; // Use global loading
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = { ...action.payload, id: action.payload.user_id }; 
+        state.isLoading = false; // Use global loading
+        state.user = { ...action.payload, id: action.payload.user_id };
         state.token = action.payload.access_token;
         state.isAuthenticated = true;
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; // Use global loading
         state.error = action.payload;
         state.user = null;
         state.token = null;
@@ -354,17 +357,17 @@ const authSlice = createSlice({
       })
 
       .addCase(checkSession.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true; // Use global loading
         state.error = null;
       })
       .addCase(checkSession.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = { ...action.payload, id: action.payload.user_id }; 
-        state.token = localStorage.getItem('jwt_token'); 
+        state.isLoading = false; // Use global loading
+        state.user = { ...action.payload, id: action.payload.user_id };
+        state.token = localStorage.getItem('jwt_token');
         state.isAuthenticated = true;
       })
       .addCase(checkSession.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; // Use global loading
         state.error = action.payload;
         state.user = null;
         state.token = null;
@@ -372,44 +375,45 @@ const authSlice = createSlice({
       })
 
       .addCase(fetchUserProfile.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true; // Use global loading
         state.error = null;
       })
       .addCase(fetchUserProfile.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = { ...action.payload, id: action.payload.id || action.payload.user_id }; 
+        state.isLoading = false; // Use global loading
+        state.user = { ...action.payload, id: action.payload.id || action.payload.user_id };
       })
       .addCase(fetchUserProfile.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; // Use global loading
         state.error = action.payload;
       })
 
       .addCase(updateUserProfile.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true; // Use global loading
         state.error = null;
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = { ...action.payload, id: action.payload.id || action.payload.user_id }; 
+        state.isLoading = false; // Use global loading
+        state.user = { ...action.payload, id: action.payload.id || action.payload.user_id };
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoading = false; // Use global loading
         state.error = action.payload;
       })
 
+      // MODIFIED: fetchUserPosts to use isUserPostsLoading
       .addCase(fetchUserPosts.pending, (state) => {
-        state.isLoading = true; 
+        state.isUserPostsLoading = true; // Use dedicated loading
         state.error = null;
       })
       .addCase(fetchUserPosts.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.userPosts = action.payload; 
-        state.hasFetchedUserPosts = true; 
+        state.isUserPostsLoading = false; // Use dedicated loading
+        state.userPosts = action.payload;
+        state.hasFetchedUserPosts = true;
       })
       .addCase(fetchUserPosts.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isUserPostsLoading = false; // Use dedicated loading
         state.error = action.payload;
-        state.hasFetchedUserPosts = true; 
+        state.hasFetchedUserPosts = true;
       })
 
       // Cases for fetchFollowing
@@ -419,12 +423,12 @@ const authSlice = createSlice({
       })
       .addCase(fetchFollowing.fulfilled, (state, action) => {
         state.isFollowingLoading = false;
-        state.following = action.payload; 
+        state.following = action.payload;
       })
       .addCase(fetchFollowing.rejected, (state, action) => {
         state.isFollowingLoading = false;
         state.followingError = action.payload;
-        state.following = []; 
+        state.following = [];
       })
 
       // Cases for followUser
@@ -438,7 +442,7 @@ const authSlice = createSlice({
         }
       })
       .addCase(followUser.rejected, (state, action) => {
-        state.error = action.payload; 
+        state.error = action.payload;
       })
 
       // Cases for unfollowUser
@@ -450,7 +454,7 @@ const authSlice = createSlice({
         state.following = state.following.filter(user => user.id !== unfollowedUserId);
       })
       .addCase(unfollowUser.rejected, (state, action) => {
-        state.error = action.payload; 
+        state.error = action.payload;
       })
 
       // Cases for fetchFollowers
@@ -460,16 +464,15 @@ const authSlice = createSlice({
       })
       .addCase(fetchFollowers.fulfilled, (state, action) => {
         state.isFollowersLoading = false;
-        state.followers = action.payload; 
+        state.followers = action.payload;
       })
       .addCase(fetchFollowers.rejected, (state, action) => {
         state.isFollowersLoading = false;
         state.followersError = action.payload;
-        state.followers = []; 
+        state.followers = [];
       });
   },
 });
 
-// CORRECTED: Removed fetchFollowers from this destructuring as it's already exported above.
-export const { logout, clearError, setUser } = authSlice.actions; 
+export const { logout, clearError, setUser } = authSlice.actions;
 export default authSlice.reducer;

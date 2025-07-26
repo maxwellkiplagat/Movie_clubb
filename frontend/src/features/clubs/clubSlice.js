@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { logout } from '../auth/authSlice'; 
+import { logout, fetchUserPosts } from '../auth/authSlice';
 
 const API_URL = 'http://127.0.0.1:5000';
 
@@ -28,7 +28,7 @@ export const fetchMyClubs = createAsyncThunk(
   async (_, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
-      const userId = getState().auth.user?.id; 
+      const userId = getState().auth.user?.id;
       if (!token || !userId) {
         return rejectWithValue('User not authenticated or ID missing. Cannot fetch user clubs.');
       }
@@ -72,7 +72,6 @@ export const joinClub = createAsyncThunk(
   }
 );
 
-// Max's new feature: leaveClub thunk
 export const leaveClub = createAsyncThunk(
   'clubs/leaveClub',
   async (clubId, { rejectWithValue, getState }) => {
@@ -89,14 +88,13 @@ export const leaveClub = createAsyncThunk(
       });
       const data = await response.json();
       if (!response.ok) return rejectWithValue(data.message || 'Failed to leave club');
-      return clubId; // Return clubId to filter it out from myClubs state
+      return clubId;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error leaving club');
     }
   }
 );
 
-// NEW THUNK: Fetch details for a single club by ID
 export const fetchClubDetails = createAsyncThunk(
   'clubs/fetchClubDetails',
   async (clubId, { rejectWithValue, getState }) => {
@@ -105,12 +103,11 @@ export const fetchClubDetails = createAsyncThunk(
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // Assuming a backend route like GET /clubs/<club_id> exists
       const response = await fetch(`${API_URL}/clubs/${clubId}`, { headers });
       const data = await response.json();
 
       if (!response.ok) return rejectWithValue(data.message || `Failed to fetch club with ID ${clubId}`);
-      return data; // Should be a single club object
+      return data;
     } catch (error) {
       return rejectWithValue(error.message || `Network error fetching club with ID ${clubId}`);
     }
@@ -160,21 +157,81 @@ export const createPost = createAsyncThunk(
   }
 );
 
+export const deletePost = createAsyncThunk(
+  'clubs/deletePost',
+  async (postId, { rejectWithValue, getState, dispatch }) => {
+    try {
+      const token = getState().auth.token;
+      if (!token) return rejectWithValue('Authentication required to delete a post.');
+
+      const response = await fetch(`${API_URL}/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.message || 'Failed to delete post');
+      }
+
+      const userId = getState().auth.user?.id;
+      if (userId) {
+        dispatch(fetchUserPosts(userId));
+      }
+
+      return postId;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Network error deleting post');
+    }
+  }
+);
+
+// NEW THUNK: Fetch all posts for the main feed
+export const fetchFeedPosts = createAsyncThunk(
+  'clubs/fetchFeedPosts',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_URL}/posts/feed`, { headers });
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.message || 'Failed to fetch feed posts');
+      }
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Network error fetching feed posts');
+    }
+  }
+);
+
+
 // Slice
 const clubSlice = createSlice({
   name: 'clubs',
   initialState: {
     allClubs: [],
     myClubs: [],
-    currentClub: null, // NEW STATE: To store details of the currently viewed club
+    currentClub: null,
     currentClubPosts: [],
-    isAllClubsLoading: false, 
-    isMyClubsLoading: false,  
-    isCurrentClubLoading: false, // NEW STATE: Loading flag for currentClub
-    isLoading: false,         // General loading for join/leave/createPost
+    feedPosts: [], // NEW STATE: To store posts for the main feed
+    isAllClubsLoading: false,
+    isMyClubsLoading: false,
+    isCurrentClubLoading: false,
+    isLoading: false,
     error: null,
     postCreationStatus: 'idle',
     postCreationError: null,
+    postDeletionStatus: 'idle',
+    postDeletionError: null,
+    isFeedPostsLoading: false, // NEW STATE: Loading flag for feed posts
+    feedPostsError: null,      // NEW STATE: Error for feed posts
   },
   reducers: {
     clearClubError: (state) => {
@@ -183,7 +240,6 @@ const clubSlice = createSlice({
     clearCurrentClubPosts: (state) => {
       state.currentClubPosts = [];
     },
-    // MODIFIED: clearCurrentClub to also clear currentClub object
     clearCurrentClub: (state) => {
       state.currentClub = null;
       state.currentClubPosts = [];
@@ -194,55 +250,66 @@ const clubSlice = createSlice({
     clearPostCreationError: (state) => {
       state.postCreationError = null;
     },
-    resetClubState: (state) => { 
+    setPostDeletionStatus: (state, action) => {
+      state.postDeletionStatus = action.payload;
+    },
+    clearPostDeletionError: (state) => {
+      state.postDeletionError = null;
+    },
+    resetClubState: (state) => {
       state.allClubs = [];
       state.myClubs = [];
-      state.currentClub = null; // Reset currentClub on full state reset
+      state.currentClub = null;
       state.currentClubPosts = [];
+      state.feedPosts = [];
       state.isAllClubsLoading = false;
       state.isMyClubsLoading = false;
-      state.isCurrentClubLoading = false; // Reset currentClub loading on full state reset
+      state.isCurrentClubLoading = false;
       state.isLoading = false;
       state.error = null;
       state.postCreationStatus = 'idle';
       state.postCreationError = null;
+      state.postDeletionStatus = 'idle';
+      state.postDeletionError = null;
+      state.isFeedPostsLoading = false;
+      state.feedPostsError = null;
     }
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchAllClubs.pending, (state) => {
-        state.isAllClubsLoading = true; 
+        state.isAllClubsLoading = true;
         state.error = null;
       })
       .addCase(fetchAllClubs.fulfilled, (state, action) => {
-        state.isAllClubsLoading = false; 
+        state.isAllClubsLoading = false;
         state.allClubs = action.payload;
       })
       .addCase(fetchAllClubs.rejected, (state, action) => {
-        state.isAllClubsLoading = false; 
+        state.isAllClubsLoading = false;
         state.error = action.payload;
       })
       .addCase(fetchMyClubs.pending, (state) => {
-        state.isMyClubsLoading = true; 
+        state.isMyClubsLoading = true;
         state.error = null;
       })
       .addCase(fetchMyClubs.fulfilled, (state, action) => {
-        state.isMyClubsLoading = false; 
+        state.isMyClubsLoading = false;
         state.myClubs = action.payload;
       })
       .addCase(fetchMyClubs.rejected, (state, action) => {
-        state.isMyClubsLoading = false; 
+        state.isMyClubsLoading = false;
         state.error = action.payload;
       })
       .addCase(joinClub.pending, (state) => {
-        state.isLoading = true; 
+        state.isLoading = true;
         state.error = null;
       })
-      .addCase(joinClub.fulfilled, (state, action) => { 
-        state.isLoading = false; 
+      .addCase(joinClub.fulfilled, (state, action) => {
+        state.isLoading = false;
       })
       .addCase(joinClub.rejected, (state, action) => {
-        state.isLoading = false; 
+        state.isLoading = false;
         state.error = action.payload;
       })
       .addCase(leaveClub.pending, (state) => {
@@ -251,8 +318,7 @@ const clubSlice = createSlice({
       })
       .addCase(leaveClub.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.myClubs = state.myClubs.filter(club => club.id !== action.payload); 
-        // If the user left the current club, clear currentClub
+        state.myClubs = state.myClubs.filter(club => club.id !== action.payload);
         if (state.currentClub && state.currentClub.id === action.payload) {
           state.currentClub = null;
           state.currentClubPosts = [];
@@ -262,31 +328,30 @@ const clubSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      // NEW: Reducers for fetchClubDetails
       .addCase(fetchClubDetails.pending, (state) => {
         state.isCurrentClubLoading = true;
-        state.error = null; // Clear general error
-        state.currentClub = null; // Clear previous club data while loading new one
+        state.error = null;
+        state.currentClub = null;
       })
       .addCase(fetchClubDetails.fulfilled, (state, action) => {
         state.isCurrentClubLoading = false;
-        state.currentClub = action.payload; // Store the fetched club details
+        state.currentClub = action.payload;
       })
       .addCase(fetchClubDetails.rejected, (state, action) => {
         state.isCurrentClubLoading = false;
-        state.error = action.payload; // Set general error
-        state.currentClub = null; // Clear club data on error
+        state.error = action.payload;
+        state.currentClub = null;
       })
       .addCase(fetchClubPosts.pending, (state) => {
-        state.isLoading = true; 
+        state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchClubPosts.fulfilled, (state, action) => {
-        state.isLoading = false; 
+        state.isLoading = false;
         state.currentClubPosts = action.payload;
       })
       .addCase(fetchClubPosts.rejected, (state, action) => {
-        state.isLoading = false; 
+        state.isLoading = false;
         state.error = action.payload;
       })
       .addCase(createPost.pending, (state) => {
@@ -300,31 +365,64 @@ const clubSlice = createSlice({
         state.postCreationStatus = 'failed';
         state.postCreationError = action.payload;
       })
-      .addCase(logout, (state) => { 
+      .addCase(deletePost.pending, (state) => {
+        state.postDeletionStatus = 'pending';
+        state.postDeletionError = null;
+      })
+      .addCase(deletePost.fulfilled, (state, action) => {
+        state.postDeletionStatus = 'succeeded';
+        const deletedPostId = action.payload;
+        state.currentClubPosts = state.currentClubPosts.filter(post => post.id !== deletedPostId);
+        state.feedPosts = state.feedPosts.filter(post => post.id !== deletedPostId);
+      })
+      .addCase(deletePost.rejected, (state, action) => {
+        state.postDeletionStatus = 'failed';
+        state.postDeletionError = action.payload;
+      })
+      // NEW: Reducers for fetchFeedPosts
+      .addCase(fetchFeedPosts.pending, (state) => {
+        state.isFeedPostsLoading = true;
+        state.feedPostsError = null;
+      })
+      .addCase(fetchFeedPosts.fulfilled, (state, action) => {
+        state.isFeedPostsLoading = false;
+        state.feedPosts = action.payload;
+      })
+      .addCase(fetchFeedPosts.rejected, (state, action) => {
+        state.isFeedPostsLoading = false;
+        state.feedPostsError = action.payload;
+      })
+      .addCase(logout, (state) => {
         console.log("clubSlice: Handling logout, resetting club state.");
         state.allClubs = [];
         state.myClubs = [];
-        state.currentClub = null; // Reset currentClub on logout
+        state.currentClub = null;
         state.currentClubPosts = [];
+        state.feedPosts = [];
         state.isAllClubsLoading = false;
         state.isMyClubsLoading = false;
-        state.isCurrentClubLoading = false; // Reset currentClub loading on logout
+        state.isCurrentClubLoading = false;
         state.isLoading = false;
         state.error = null;
         state.postCreationStatus = 'idle';
         state.postCreationError = null;
+        state.postDeletionStatus = 'idle';
+        state.postDeletionError = null;
+        state.isFeedPostsLoading = false;
+        state.feedPostsError = null;
       });
   },
 });
 
-// Combine exports, ensuring new action clearCurrentClub is included
-export const { 
-  clearClubError, 
-  clearCurrentClubPosts, 
-  clearCurrentClub, // Export the new action
-  setPostCreationStatus, 
-  clearPostCreationError, 
-  resetClubState 
+export const {
+  clearClubError,
+  clearCurrentClubPosts,
+  clearCurrentClub,
+  setPostCreationStatus,
+  clearPostCreationError,
+  setPostDeletionStatus,
+  clearPostDeletionError,
+  resetClubState
 } = clubSlice.actions;
 
 export default clubSlice.reducer;
