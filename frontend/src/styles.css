@@ -869,6 +869,8 @@ input, textarea {
 .club-card.joined {
   border: 2px solid #22c55e;
   background-color: #1e3a2f;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer
 }
 /* === DASHBOARD SECTION STYLING === */
 .dashboard-container {
@@ -899,6 +901,7 @@ input, textarea {
 .club-card.joined .join-btn {
   text-decoration: none !important;
 }
+
 /* === Edit Profile Link === */
 a.join-btn,
 a.join-btn:visited {
@@ -1037,11 +1040,19 @@ a.join-btn:hover {
   font-weight: bold;
   border-radius: 6px;
   font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
 }
 
 .club-card.joined {
   border: 2px solid #22c55e;
   background-color: #1e3a2f;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.club-card.joined:hover {
+  background-color: #22c55e;
+  border-color: #1e3a2f;
+  transform: scale(1.02);
 }
 /* === DASHBOARD SECTION STYLING === */
 .dashboard-container {
@@ -1072,6 +1083,7 @@ a.join-btn:hover {
 .club-card.joined .join-btn {
   text-decoration: none !important;
 }
+
 /* === Edit Profile Link === */
 a.join-btn,
 a.join-btn:visited {
@@ -1081,6 +1093,7 @@ a.join-btn:visited {
 a.join-btn:hover {
   text-decoration: none;
 }
+
 
 /* === CLUBDETAILS SECTION STYLING ====*/
 .page-container{
@@ -1383,6 +1396,12 @@ a.join-btn:hover {
   font-weight: 600;
   padding: 0.55rem 1rem;
   border-radius: 9999px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: default;
+}
+.joined-label:hover {
+  background-color: #15803d; /* Green-700 */
+  transform: scale(1.02);
 }
 .create-post-btn {
   background-color: #2563eb;
@@ -1405,8 +1424,3 @@ a.join-btn:hover {
   outline: none;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
-
-
-
-
-
