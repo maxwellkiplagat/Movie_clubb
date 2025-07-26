@@ -6,19 +6,19 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from flask_cors import CORS
+from flask_cors import CORS # Keep this import
 from datetime import timedelta
-import traceback # NEW: Import traceback for detailed error logging
+import traceback
 
 load_dotenv()
 
-# Initialize extensions
+# Initialize extensions (only those that don't take 'app' directly)
 db = SQLAlchemy()
 api = Api()
 bcrypt = Bcrypt()
 jwt = JWTManager()
 migrate = Migrate()
-cors = CORS()
+# REMOVED: cors = CORS() # We will initialize CORS directly with the app
 
 def create_app():
     # Create and configure the Flask application
@@ -29,13 +29,16 @@ def create_app():
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
-    # Initialize extensions with the app
+    # NEW: Initialize CORS directly with the app instance here
+    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+
+    # Initialize other extensions with the app
     db.init_app(app)
     api.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+    # REMOVED: cors.init_app(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 
     # Import models to ensure they are registered with SQLAlchemy
     from .models.user import User
@@ -50,23 +53,21 @@ def create_app():
     # Register error handlers
     @app.errorhandler(404)
     def not_found(error):
-        # For 404s, we'll still return the standard message, but the traceback might be useful if it's an internal 404
         print(f"DEBUG: 404 Error caught: {error}")
-        traceback.print_exc() # Print traceback for 404s too, just in case
+        traceback.print_exc()
         return make_response(jsonify({'errors': ['Not Found']}), 404)
 
     @app.errorhandler(400)
     def bad_request(error):
         print(f"DEBUG: 400 Error caught: {error}")
-        traceback.print_exc() # Print traceback for 400s
+        traceback.print_exc()
         return make_response(jsonify({'errors': ['Bad Request']}), 400)
 
-    # Generic Exception Handler - MODIFIED FOR DEBUGGING
     @app.errorhandler(Exception)
     def handle_exception(e):
         db.session.rollback()
         print(f"DEBUG: Caught unexpected exception: {type(e).__name__}: {str(e)}")
-        traceback.print_exc() # THIS IS THE KEY CHANGE: Print full traceback
+        traceback.print_exc()
         return make_response(jsonify({'message': f'Unexpected error: {str(e)}'}), 500)
 
     @app.route('/')
@@ -84,7 +85,7 @@ def create_app():
     app.register_blueprint(club_bp, url_prefix='/clubs')
 
     from .routes.post_routes import post_bp
-    app.register_blueprint(post_bp, url_prefix='/posts') 
+    app.register_blueprint(post_bp, url_prefix='') 
 
     from .routes.user_routes import user_bp
     app.register_blueprint(user_bp, url_prefix='') 

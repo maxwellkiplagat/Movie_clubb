@@ -5,7 +5,9 @@ from ..models.user import User
 from ..models.club_member import ClubMember 
 from ..models.club import Club 
 from ..models.follow import Follow 
+from ..models.post import Post # Import Post model
 import re 
+import traceback # NEW: Import traceback for detailed error logging
 
 # Create a Blueprint for user routes. 
 user_bp = Blueprint('user_bp', __name__)
@@ -117,6 +119,45 @@ def get_user_clubs(user_id):
     joined_clubs = [membership.club.to_dict() for membership in memberships if membership.club]
     
     return jsonify(joined_clubs), 200
+
+# NEW ROUTE: Get posts created by a specific user - MODIFIED FOR DEBUGGING
+@user_bp.route('/users/<int:user_id>/posts', methods=['GET'])
+@jwt_required()
+def get_user_posts(user_id):
+    """
+    Retrieves all posts created by a specific user.
+    Requires authentication.
+    """
+    current_user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    # For now, let's allow viewing other users' public posts.
+    # If you want to restrict this to only the current user viewing their own posts, uncomment the line below:
+    # if current_user_id != user_id:
+    #     return jsonify({'message': 'Unauthorized to view this user\'s posts'}), 403
+
+    user_posts_data = []
+    for post in user.posts: # Iterate through the posts relationship
+        try:
+            # Attempt to serialize each post
+            post_dict = post.to_dict()
+            user_posts_data.append(post_dict)
+        except Exception as e:
+            # If an error occurs during serialization of a specific post, log it
+            print(f"ERROR: Failed to serialize post ID {post.id} for user {user_id}: {e}")
+            traceback.print_exc() # Print full traceback for the specific post
+            # Optionally, you can skip this post or return a partial list
+            # For now, we'll just log and continue, but the 500 will still occur if the list is returned with error
+            # To prevent 500, you might return a 200 with a message about partial data
+            # or include an 'errors' field in the response.
+            # For debugging, just logging is fine. The 500 will still tell us something went wrong.
+            return jsonify({"message": f"Error processing posts for user {user_id}: {str(e)}"}), 500 # Return 500 immediately for any post error
+
+    return jsonify(user_posts_data), 200
+
 
 # Route to get users that a specific user is following
 @user_bp.route('/users/<int:user_id>/following', methods=['GET']) 
