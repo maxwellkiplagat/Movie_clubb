@@ -2,19 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { followUser, unfollowUser, fetchFollowing } from '../features/auth/authSlice';
-import { deletePost, toggleLike, addComment, deleteComment } from '../features/clubs/clubSlice'; // Import new thunks
+import { deletePost, toggleLike, addComment, deleteComment } from '../features/clubs/clubSlice';
 
 const PostCard = ({ post }) => {
   const dispatch = useDispatch();
   const { user: currentUser, following: followingListFromRedux, isAuthenticated } = useSelector((state) => state.auth);
 
   // Determine if the current user has liked this post
-  // The 'post.likes' from backend is now an array of Like objects.
-  // We need to check if any of these Like objects have the current user's ID.
   const hasLiked = post.likes && currentUser ? post.likes.some(like => like.user_id === currentUser.id) : false;
 
   const [commentsVisible, setCommentsVisible] = useState(false);
-  const [newCommentContent, setNewCommentContent] = useState(''); // Renamed to avoid conflict with 'newComment' thunk param
+  const [newCommentContent, setNewCommentContent] = useState('');
 
   const isFollowing = followingListFromRedux.some(followedUser => followedUser.id === post.author_id);
   const isOwnPost = currentUser && currentUser.id === post.author_id;
@@ -33,8 +31,6 @@ const PostCard = ({ post }) => {
       return;
     }
     try {
-      // The toggleLike thunk handles adding/removing the like on the backend
-      // and the clubSlice extraReducers will update the post's likes_count and likes array
       await dispatch(toggleLike(post.id)).unwrap();
       console.log(`Successfully toggled like for post ${post.id}`);
     } catch (error) {
@@ -123,22 +119,22 @@ const PostCard = ({ post }) => {
   };
 
   return (
-    <div className="post-card p-4 rounded-lg bg-[#1a2a44] shadow-md text-white">
+    <div className="post-card p-4 rounded-lg bg-[#1a2a44] shadow-md text-white w-full md:max-w-lg lg:max-w-xl mx-auto">
       <h2 className="text-xl font-semibold text-[#ff5733] mb-1">
-        {post.movie_title} {/* Use movie_title directly */}
+        {post.movie_title}
       </h2>
 
-      <p className="text-gray-200 mb-2">{post.content}</p> {/* Use content directly */}
+      <p className="text-gray-200 mb-2">{post.content}</p>
 
       <div className="post-meta flex justify-between text-sm text-gray-400 mb-4">
-        <span>Posted by <strong>@{post.author_username}</strong></span> {/* Use author_username directly */}
+        <span>Posted by <strong>@{post.author_username}</strong></span>
         <span>{post.created_at ? new Date(post.created_at).toLocaleDateString() : 'Invalid Date'}</span>
       </div>
 
-      {/* Buttons */}
-      <div className="post-actions flex gap-3 mb-4 flex-wrap">
+      {/* Buttons - Improved Grid Layout */}
+      <div className="post-actions grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4">
         <button onClick={handleToggleLike} className="post-btn">
-          {hasLiked ? 'Unlike' : 'Like'} ({post.likes_count || 0}) {/* Use post.likes_count */}
+          {hasLiked ? 'Unlike' : 'Like'} ({post.likes_count || 0})
         </button>
 
         <button
@@ -174,14 +170,20 @@ const PostCard = ({ post }) => {
           {post.comments && post.comments.length === 0 ? (
             <p className="text-gray-400">No comments yet.</p>
           ) : (
-            <ul className="space-y-1 mb-3">
+            <ul className="space-y-2 mb-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar"> {/* Added max-h and overflow */}
               {post.comments && post.comments.map((comment) => (
-                <li key={comment.id} className="text-sm text-gray-200 flex justify-between items-center">
-                  <span><strong>@{comment.username}</strong>: {comment.content}</span>
+                <li key={comment.id} className="
+                  text-sm text-gray-200 flex justify-between items-start p-2 rounded-md bg-[#2c3e50] border border-gray-600
+                  flex-col sm:flex-row sm:items-center
+                ">
+                  <span className="flex-grow"><strong>@{comment.username}</strong>: {comment.content}</span>
                   {isAuthenticated && currentUser?.id === comment.user_id && (
                     <button
                       onClick={() => handleDeleteComment(comment.id)}
-                      className="text-red-400 hover:text-red-600 text-xs ml-2"
+                      className="
+                        mt-1 sm:mt-0 sm:ml-4 px-2 py-1 rounded-md bg-red-500 text-white text-xs
+                        hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50
+                      "
                     >
                       Delete
                     </button>
@@ -198,11 +200,11 @@ const PostCard = ({ post }) => {
                 onChange={(e) => setNewCommentContent(e.target.value)}
                 placeholder="Write a comment..."
                 rows={2}
-                className="w-full p-2 rounded bg-[#2c3e50] text-white border border-gray-600 mb-2"
+                className="w-full p-2 rounded bg-[#2c3e50] text-white border border-gray-600 mb-2 focus:outline-none focus:ring-2 focus:ring-[#ff5733]"
               />
               <button
                 type="submit"
-                className="post-btn"
+                className="post-btn w-full sm:w-auto" // Make button full width on small screens
               >
                 Add Comment
               </button>
