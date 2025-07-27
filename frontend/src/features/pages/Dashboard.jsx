@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   fetchUserProfile,
@@ -8,6 +8,7 @@ import {
   fetchFollowing,
   unfollowUser,
   fetchFollowers,
+  followUser,
   fetchUserPosts
 } from '../auth/authSlice';
 import { fetchMyClubs, leaveClub } from '../clubs/clubSlice';
@@ -258,6 +259,29 @@ const Dashboard = () => {
     dispatch(unfollowUser(userId));
   };
 
+  const handleFollowBack = async (followerId) => {
+    if (!isAuthenticated) {
+      alert("Please log in to follow users.");
+      return;
+    }
+    if (user?.id === followerId) {
+      alert("You cannot follow yourself.");
+      return;
+    }
+    console.log(`Dashboard: Attempting to follow back user with ID: ${followerId}`);
+    try {
+      await dispatch(followUser(followerId)).unwrap();
+      console.log(`Successfully followed back user ${followerId}`);
+      if (user?.id) {
+        dispatch(fetchFollowing(user.id));
+      }
+    } catch (error) {
+      console.error("Failed to follow back:", error);
+      alert(`Failed to follow back: ${error.message || 'An error occurred.'}`);
+    }
+  };
+
+
   const handleLeaveClubFromDashboard = async (clubId) => {
     console.log(`Dashboard: Attempting to leave club with ID: ${clubId}`);
     try {
@@ -269,14 +293,12 @@ const Dashboard = () => {
     }
   };
 
-  // Sort userPosts by created_at in descending order (newest first)
   const sortedUserPosts = [...userPosts].sort((a, b) => {
     const dateA = new Date(a.created_at);
     const dateB = new Date(b.created_at);
-    return dateB - dateA; // Descending order
+    return dateB - dateA;
   });
 
-  // Overall loading condition for the dashboard
   if (!user?.id && authLoading) {
     return (
       <div className="dashboard-loading p-6 bg-gray-900 min-h-screen text-white flex items-center justify-center">
@@ -285,7 +307,6 @@ const Dashboard = () => {
     );
   }
 
-  // Handle errors specifically
   if (authError || clubsError || followingError || followersError) {
     return (
       <div className="dashboard-error p-6 bg-gray-900 min-h-screen text-red-500 text-center">
@@ -297,7 +318,6 @@ const Dashboard = () => {
     );
   }
 
-  // If not authenticated and not currently loading auth, redirect
   if (!isAuthenticated) {
     return null;
   }
@@ -347,7 +367,7 @@ const Dashboard = () => {
           <p className="text-gray-400">You haven’t created any posts yet.</p>
         ) : (
           <div className="feed-list">
-            {sortedUserPosts.map(post => ( // Use sortedUserPosts here
+            {sortedUserPosts.map(post => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
@@ -402,19 +422,37 @@ const Dashboard = () => {
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Followers</h2>
         {isFollowersLoading ? (
-            <p className className="text-blue-400 text-center">Loading your followers...</p>
+            <p className="text-blue-400 text-center">Loading your followers...</p>
         ) : followersError ? (
             <p className="text-red-500 text-center">Error loading followers list: {followersError}</p>
         ) : followers.length === 0 ? (
           <p className="text-gray-400">You don't have any followers yet.</p>
         ) : (
           <ul className="feed-list">
-            {followers.map(followerUser => (
-              <li key={followerUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md mb-4">
-                <p className="text-white text-lg">@{followerUser.username}</p>
-                {/* You might add a "Follow Back" button here later */}
-              </li>
-            ))}
+            {followers.map(followerUser => {
+              const isAlreadyFollowingBack = following.some(f => f.id === followerUser.id);
+              return (
+                <li key={followerUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
+                  <p className="text-white text-lg">@{followerUser.username}</p>
+                  {isAuthenticated && !isAlreadyFollowingBack && user?.id !== followerUser.id && (
+                    <button
+                      className="post-btn"
+                      onClick={() => handleFollowBack(followerUser.id)}
+                    >
+                      Follow Back
+                    </button>
+                  )}
+                  {isAuthenticated && isAlreadyFollowingBack && user?.id !== followerUser.id && (
+                    <button
+                      className="leave-btn"
+                      onClick={() => handleUnfollowFromDashboard(followerUser.id)}
+                    >
+                      Unfollow
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
