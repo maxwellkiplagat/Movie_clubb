@@ -10,27 +10,27 @@ import {
   fetchFollowers,
   followUser,
   fetchUserPosts
-} from '../auth/authSlice';
-import { fetchMyClubs, leaveClub } from '../clubs/clubSlice';
+} from '../../features/auth/authSlice';
+import { fetchMyClubs, leaveClub } from '../../features/clubs/clubSlice';
 import PostCard from '../../components/PostCard';
 import ClubCard from '../../components/ClubCard';
 
-// Simple Modal Component for Edit Profile
+// Simple Modal Component for Edit Profile - STYLED FOR RESPONSIVENESS (Bio input removed)
 const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
     password: '',
+    // BIO FIELD REMOVED FROM HERE as per your instruction
   });
 
   useEffect(() => {
-    console.log("EditProfileModal useEffect: User prop changed, resetting form data.");
     setFormData({
       username: user?.username || '',
       email: user?.email || '',
       password: '',
     });
-  }, [user?.id, user?.username, user?.email]);
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,6 +41,7 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
     const dataToSave = {
       username: formData.username,
       email: formData.email,
+      // BIO FIELD REMOVED FROM DATA TO SAVE as per your instruction
     };
     if (formData.password) {
       dataToSave.password = formData.password;
@@ -49,51 +50,56 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-        <h2 className="text-2xl font-bold text-orange-400 mb-4">Edit Profile</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 sm:p-6">
+      <div className="bg-[#1a2a44] p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-700">
+        <h2 className="text-2xl font-bold text-[#ff5733] mb-6 text-center">Edit Profile</h2>
+        {error && <p className="text-red-500 mb-4 text-center text-sm">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-300 text-sm font-bold mb-2">Username:</label>
+            <label htmlFor="username" className="block text-gray-300 text-sm font-semibold mb-2">Username:</label>
             <input
               type="text"
               id="username"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+              className="w-full p-3 rounded-md bg-[#2c3e50] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#ff5733]"
               required
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-300 text-sm font-bold mb-2">Email:</label>
+            <label htmlFor="email" className="block text-gray-300 text-sm font-semibold mb-2">Email:</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+              className="w-full p-3 rounded-md bg-[#2c3e50] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#ff5733]"
               required
             />
           </div>
+          {/* This is where the bio field was. It's now removed. */}
           <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-300 text-sm font-bold mb-2">New Password (optional):</label>
+            <label htmlFor="password" className="block text-gray-300 text-sm font-semibold mb-2">New Password (optional):</label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+              className="w-full p-3 rounded-md bg-[#2c3e50] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#ff5733]"
               placeholder="Leave blank to keep current password"
             />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+              className="
+                w-full sm:w-auto px-6 py-3 rounded-full bg-blue-600 text-white font-bold
+                hover:bg-blue-700 transition duration-300 ease-in-out
+                transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75
+              "
               disabled={isLoading}
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
@@ -101,7 +107,11 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+              className="
+                w-full sm:w-auto px-6 py-3 rounded-full bg-gray-600 text-white font-bold
+                hover:bg-gray-700 transition duration-300 ease-in-out
+                transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75
+              "
               disabled={isLoading}
             >
               Cancel
@@ -219,6 +229,7 @@ const Dashboard = () => {
     user?.id,
     user?.username,
     user?.email,
+    user?.bio, // Keep this here for the display of bio on the dashboard
     dispatch,
     isMyClubsLoading,
     myClubs,
