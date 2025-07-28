@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   fetchUserProfile,
@@ -8,28 +8,29 @@ import {
   fetchFollowing,
   unfollowUser,
   fetchFollowers,
+  followUser,
   fetchUserPosts
-} from '../auth/authSlice';
-import { fetchMyClubs, leaveClub } from '../clubs/clubSlice';
+} from '../../features/auth/authSlice';
+import { fetchMyClubs, leaveClub } from '../../features/clubs/clubSlice';
 import PostCard from '../../components/PostCard';
 import ClubCard from '../../components/ClubCard';
 
-// Simple Modal Component for Edit Profile
+// Simple Modal Component for Edit Profile - STYLED FOR RESPONSIVENESS (Bio input removed)
 const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
     password: '',
+    // BIO FIELD REMOVED FROM HERE as per your instruction
   });
 
   useEffect(() => {
-    console.log("EditProfileModal useEffect: User prop changed, resetting form data.");
     setFormData({
       username: user?.username || '',
       email: user?.email || '',
       password: '',
     });
-  }, [user?.id, user?.username, user?.email]);
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,6 +41,7 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
     const dataToSave = {
       username: formData.username,
       email: formData.email,
+      // BIO FIELD REMOVED FROM DATA TO SAVE as per your instruction
     };
     if (formData.password) {
       dataToSave.password = formData.password;
@@ -48,51 +50,56 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-        <h2 className="text-2xl font-bold text-orange-400 mb-4">Edit Profile</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 sm:p-6">
+      <div className="bg-[#1a2a44] p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-700">
+        <h2 className="text-2xl font-bold text-[#ff5733] mb-6 text-center">Edit Profile</h2>
+        {error && <p className="text-red-500 mb-4 text-center text-sm">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-300 text-sm font-bold mb-2">Username:</label>
+            <label htmlFor="username" className="block text-gray-300 text-sm font-semibold mb-2">Username:</label>
             <input
               type="text"
               id="username"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+              className="w-full p-3 rounded-md bg-[#2c3e50] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#ff5733]"
               required
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-300 text-sm font-bold mb-2">Email:</label>
+            <label htmlFor="email" className="block text-gray-300 text-sm font-semibold mb-2">Email:</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+              className="w-full p-3 rounded-md bg-[#2c3e50] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#ff5733]"
               required
             />
           </div>
+          {/* This is where the bio field was. It's now removed. */}
           <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-300 text-sm font-bold mb-2">New Password (optional):</label>
+            <label htmlFor="password" className="block text-gray-300 text-sm font-semibold mb-2">New Password (optional):</label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+              className="w-full p-3 rounded-md bg-[#2c3e50] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#ff5733]"
               placeholder="Leave blank to keep current password"
             />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+              className="
+                w-full sm:w-auto px-6 py-3 rounded-full bg-blue-600 text-white font-bold
+                hover:bg-blue-700 transition duration-300 ease-in-out
+                transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75
+              "
               disabled={isLoading}
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
@@ -100,7 +107,11 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+              className="
+                w-full sm:w-auto px-6 py-3 rounded-full bg-gray-600 text-white font-bold
+                hover:bg-gray-700 transition duration-300 ease-in-out
+                transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75
+              "
               disabled={isLoading}
             >
               Cancel
@@ -218,6 +229,7 @@ const Dashboard = () => {
     user?.id,
     user?.username,
     user?.email,
+    user?.bio, // Keep this here for the display of bio on the dashboard
     dispatch,
     isMyClubsLoading,
     myClubs,
@@ -258,6 +270,29 @@ const Dashboard = () => {
     dispatch(unfollowUser(userId));
   };
 
+  const handleFollowBack = async (followerId) => {
+    if (!isAuthenticated) {
+      alert("Please log in to follow users.");
+      return;
+    }
+    if (user?.id === followerId) {
+      alert("You cannot follow yourself.");
+      return;
+    }
+    console.log(`Dashboard: Attempting to follow back user with ID: ${followerId}`);
+    try {
+      await dispatch(followUser(followerId)).unwrap();
+      console.log(`Successfully followed back user ${followerId}`);
+      if (user?.id) {
+        dispatch(fetchFollowing(user.id));
+      }
+    } catch (error) {
+      console.error("Failed to follow back:", error);
+      alert(`Failed to follow back: ${error.message || 'An error occurred.'}`);
+    }
+  };
+
+
   const handleLeaveClubFromDashboard = async (clubId) => {
     console.log(`Dashboard: Attempting to leave club with ID: ${clubId}`);
     try {
@@ -269,14 +304,12 @@ const Dashboard = () => {
     }
   };
 
-  // Sort userPosts by created_at in descending order (newest first)
   const sortedUserPosts = [...userPosts].sort((a, b) => {
     const dateA = new Date(a.created_at);
     const dateB = new Date(b.created_at);
-    return dateB - dateA; // Descending order
+    return dateB - dateA;
   });
 
-  // Overall loading condition for the dashboard
   if (!user?.id && authLoading) {
     return (
       <div className="dashboard-loading p-6 bg-gray-900 min-h-screen text-white flex items-center justify-center">
@@ -285,7 +318,6 @@ const Dashboard = () => {
     );
   }
 
-  // Handle errors specifically
   if (authError || clubsError || followingError || followersError) {
     return (
       <div className="dashboard-error p-6 bg-gray-900 min-h-screen text-red-500 text-center">
@@ -297,7 +329,6 @@ const Dashboard = () => {
     );
   }
 
-  // If not authenticated and not currently loading auth, redirect
   if (!isAuthenticated) {
     return null;
   }
@@ -347,7 +378,7 @@ const Dashboard = () => {
           <p className="text-gray-400">You haven’t created any posts yet.</p>
         ) : (
           <div className="feed-list">
-            {sortedUserPosts.map(post => ( // Use sortedUserPosts here
+            {sortedUserPosts.map(post => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
@@ -402,19 +433,37 @@ const Dashboard = () => {
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Followers</h2>
         {isFollowersLoading ? (
-            <p className ="text-blue-400 text-center">Loading your followers...</p>
+            <p className="text-blue-400 text-center">Loading your followers...</p>
         ) : followersError ? (
             <p className="text-red-500 text-center">Error loading followers list: {followersError}</p>
         ) : followers.length === 0 ? (
           <p className="text-gray-400">You don't have any followers yet.</p>
         ) : (
           <ul className="feed-list">
-            {followers.map(followerUser => (
-              <li key={followerUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md mb-4">
-                <p className="text-white text-lg">@{followerUser.username}</p>
-                {/* You might add a "Follow Back" button here later */}
-              </li>
-            ))}
+            {followers.map(followerUser => {
+              const isAlreadyFollowingBack = following.some(f => f.id === followerUser.id);
+              return (
+                <li key={followerUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
+                  <p className="text-white text-lg">@{followerUser.username}</p>
+                  {isAuthenticated && !isAlreadyFollowingBack && user?.id !== followerUser.id && (
+                    <button
+                      className="post-btn"
+                      onClick={() => handleFollowBack(followerUser.id)}
+                    >
+                      Follow Back
+                    </button>
+                  )}
+                  {isAuthenticated && isAlreadyFollowingBack && user?.id !== followerUser.id && (
+                    <button
+                      className="leave-btn"
+                      onClick={() => handleUnfollowFromDashboard(followerUser.id)}
+                    >
+                      Unfollow
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

@@ -169,7 +169,7 @@ const ClubPage = () => {
       )}
 
       <div className="all-clubs-section mt-8">
-        <h2 className="text-xl font-semibold mb-4 text-orange-400">Explore All Clubs</h2>
+        <h2 className="text-xl font-semibold mb-4 text-orange-400">🌍Explore All Clubs</h2>
         <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {isAllClubsLoading && <p className="text-blue-400 text-center">Loading clubs to explore...</p>}
           {allClubs.length > 0 ? (

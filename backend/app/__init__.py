@@ -6,7 +6,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from flask_cors import CORS # Keep this import
+from flask_cors import CORS
 from datetime import timedelta
 import traceback
 
@@ -18,7 +18,6 @@ api = Api()
 bcrypt = Bcrypt()
 jwt = JWTManager()
 migrate = Migrate()
-# REMOVED: cors = CORS() # We will initialize CORS directly with the app
 
 def create_app():
     # Create and configure the Flask application
@@ -29,7 +28,7 @@ def create_app():
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
-    # NEW: Initialize CORS directly with the app instance here
+    # Initialize CORS directly with the app instance here
     CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 
     # Initialize other extensions with the app
@@ -38,7 +37,6 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    # REMOVED: cors.init_app(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 
     # Import models to ensure they are registered with SQLAlchemy
     from .models.user import User
@@ -48,7 +46,9 @@ def create_app():
     from .models.review import Review
     from .models.watchlist import Watchlist
     from .models.follow import Follow
-    from .models.club_member import ClubMember 
+    from .models.club_member import ClubMember
+    from .models.like import Like
+    from .models.comment import Comment # Ensure this is here
 
     # Register error handlers
     @app.errorhandler(404)
@@ -76,21 +76,28 @@ def create_app():
 
     # Register API resources (Flask-RESTful)
     from .routes.auth_routes import UserRegistration, UserLogin, CheckSession
-    api.add_resource(UserRegistration, '/auth/register') 
-    api.add_resource(UserLogin, '/auth/login') 
-    api.add_resource(CheckSession, '/auth/check_session') 
+    api.add_resource(UserRegistration, '/auth/register')
+    api.add_resource(UserLogin, '/auth/login')
+    api.add_resource(CheckSession, '/auth/check_session')
 
-    # Register Flask Blueprints 
+    # Register Flask Blueprints
     from .routes.club_routes import club_bp
     app.register_blueprint(club_bp, url_prefix='/clubs')
 
     from .routes.post_routes import post_bp
-    app.register_blueprint(post_bp, url_prefix='') 
+    app.register_blueprint(post_bp, url_prefix='')
 
     from .routes.user_routes import user_bp
-    app.register_blueprint(user_bp, url_prefix='') 
+    app.register_blueprint(user_bp, url_prefix='')
 
     from .routes.movie_routes import movie_bp
     app.register_blueprint(movie_bp, url_prefix='/movies')
+
+    from .routes.like_routes import like_bp
+    app.register_blueprint(like_bp, url_prefix='')
+
+    # NEW: Register the comment_bp blueprint
+    from .routes.comment_routes import comment_bp
+    app.register_blueprint(comment_bp, url_prefix='') # Prefix to make routes like /posts/<id>/comments or /comments/<id>
 
     return app
