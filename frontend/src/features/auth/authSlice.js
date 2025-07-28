@@ -29,10 +29,6 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (userData, { rejectWithValue }) => {
     try {
-      console.log("loginUser Thunk: Attempting to log in.");
-      console.log("loginUser Thunk: User data:", userData);
-      console.log("loginUser Thunk: API URL:", `${API_URL}/auth/login`);
-
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,8 +36,6 @@ export const loginUser = createAsyncThunk(
       });
 
       const data = await response.json();
-      console.log("loginUser Thunk: Response data:", data);
-      console.log("loginUser Thunk: Response OK:", response.ok);
 
       if (!response.ok) {
         return rejectWithValue(data.message || 'Login failed');
@@ -53,7 +47,6 @@ export const loginUser = createAsyncThunk(
 
       return { ...data, id: data.user_id };
     } catch (error) {
-      console.error("loginUser Thunk: Catch block error:", error);
       return rejectWithValue(error.message || 'Network error during login');
     }
   }
@@ -171,7 +164,6 @@ export const fetchUserPosts = createAsyncThunk(
   }
 );
 
-// Fetch users that the current user is following
 export const fetchFollowing = createAsyncThunk(
   'auth/fetchFollowing',
   async (userId, { rejectWithValue, getState }) => {
@@ -198,7 +190,6 @@ export const fetchFollowing = createAsyncThunk(
   }
 );
 
-// NEW THUNK: Follow a user
 export const followUser = createAsyncThunk(
   'auth/followUser',
   async (userIdToFollow, { rejectWithValue, getState }) => {
@@ -225,7 +216,6 @@ export const followUser = createAsyncThunk(
   }
 );
 
-// NEW THUNK: Unfollow a user
 export const unfollowUser = createAsyncThunk(
   'auth/unfollowUser',
   async (userIdToUnfollow, { rejectWithValue, getState }) => {
@@ -252,7 +242,6 @@ export const unfollowUser = createAsyncThunk(
   }
 );
 
-// NEW THUNK: Fetch users that are following the current user (followers)
 export const fetchFollowers = createAsyncThunk(
   'auth/fetchFollowers',
   async (userId, { rejectWithValue, getState }) => {
@@ -332,6 +321,7 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state) => {
         state.isLoading = false; // Use global loading
+        state.error = null; // Clear error on successful registration
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false; // Use global loading
