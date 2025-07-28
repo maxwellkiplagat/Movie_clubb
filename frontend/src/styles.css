@@ -1083,6 +1083,12 @@ a.join-btn:hover {
 .club-card.joined .join-btn {
   text-decoration: none !important;
 }
+.unfollow-button {
+  background-color: #3b82f6; /* blue-500 */
+  color: white;
+  font-size: 0.75rem;        /* smaller font */
+  padding: 0.4rem 0.8rem; 
+} 
 
 /* === Edit Profile Link === */
 a.join-btn,
@@ -1372,7 +1378,7 @@ a.join-btn:hover {
   font-size: 0.875rem; /* Small text */
   font-weight: bold;
   padding: 0.65rem 0.75rem; /* py-1 px-3 */
-  border-radius: 9999px; /* Fully rounded */
+  border-radius: 6px; /* Fully rounded */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease-in-out;
   transform: scale(1);
@@ -1395,7 +1401,7 @@ a.join-btn:hover {
   font-size: 0.875rem;
   font-weight: 600;
   padding: 0.55rem 1rem;
-  border-radius: 9999px;
+  border-radius: 6px;
   transition: background-color 0.3s ease, transform 0.2s ease;
   cursor: default;
 }
@@ -1423,4 +1429,9 @@ a.join-btn:hover {
 .create-post-btn:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem
 }
