@@ -20,7 +20,7 @@ const Login = () => {
   useEffect(() => {
     console.log("Login useEffect [isAuthenticated, navigate] triggered."); 
     if (isAuthenticated) {
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/feed';
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
       sessionStorage.removeItem('redirectAfterLogin');
       console.log("Login: Authenticated, navigating to:", redirectPath); 
       navigate(redirectPath);
@@ -38,7 +38,7 @@ const Login = () => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault(); // Crucial: Prevents default form submission
+    e.preventDefault(); 
     console.log("Login: handleSubmit called."); 
     dispatch(clearError());
     console.log("Login.jsx: Dispatching loginUser with:", formData.username);
@@ -72,11 +72,21 @@ const Login = () => {
           required
         />
 
+        <div className="text-right mt-1">
+          <Link to="/forgot-password" className="text-blue-400 hover:underline">
+            Forgot Password?
+          </Link>
+        </div>
         <button type="submit" disabled={isLoading}>
           {isLoading ? 'Signing In...' : 'Sign In'}
         </button>
 
-        <p>Don't have an account? <Link to="/register">Join the Community</Link></p>
+        <p className="text-sm text-gray-300 text-center mt-4">
+          Don't have an account? {' '} 
+          <a href="/register" className="join-link">
+            Join the Community
+          </a>
+        </p>
       </form>
     </div>
   );
