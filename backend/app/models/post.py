@@ -1,6 +1,7 @@
+# backend/app/models/post.py
 from sqlalchemy_serializer import SerializerMixin
 from .. import db
-from .__init__ import BaseModelMixin 
+from .__init__ import BaseModelMixin
 from datetime import datetime
 
 class Post(BaseModelMixin, SerializerMixin, db.Model):
@@ -18,6 +19,11 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
     author = db.relationship('User', back_populates='posts', foreign_keys=[user_id])
     club = db.relationship('Club', back_populates='posts')
 
+    # NEW: Relationships for Likes and Comments
+    # 'post' here refers to the back_populates name defined in the Like and Comment models.
+    likes = db.relationship('Like', back_populates='post', lazy=True, cascade="all, delete-orphan")
+    comments = db.relationship('Comment', back_populates='post', lazy=True, cascade="all, delete-orphan")
+
     def to_dict(self):
         # Manually construct the dictionary to avoid recursion
         data = {
@@ -33,10 +39,23 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
         # Add author_username AND author_id directly
         if self.author:
             data['author_username'] = self.author.username
-            data['author_id'] = self.author.id # <--- ADDED THIS CRUCIAL LINE
+            data['author_id'] = self.author.id
         else:
             data['author_username'] = 'Unknown'
-            data['author_id'] = None # Ensure it's explicitly None if author is missing
+            data['author_id'] = None
+
+        # NEW: Include likes count
+        data['likes_count'] = len(self.likes)
+
+        # NEW: Prepare comments to be included in the post dict
+        comments_data = [{
+            'id': comment.id,
+            'user_id': comment.user_id,
+            'username': comment.user.username if comment.user else 'Unknown', # Access username via backref from Comment model
+            'content': comment.content,
+            'created_at': comment.created_at.isoformat()
+        } for comment in self.comments]
+        data['comments'] = comments_data
 
         return data
 
