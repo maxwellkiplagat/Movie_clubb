@@ -85,8 +85,11 @@ const Register = () => {
           {isLoading ? 'Joining...' : 'Join Now'}
         </button>
 
-        <p>
-          Already have an account? <Link to="/login">Sign In</Link>
+        <p className="text-sm text-gray-300 text-center mt-4">
+          Already have an account?{' '}
+          <a href="/login" className="sign-in-link">
+          Sign in
+          </a>
         </p>
       </form>
     </div>
