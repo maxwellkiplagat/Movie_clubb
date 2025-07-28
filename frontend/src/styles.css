@@ -5,11 +5,12 @@ body {
   background-color: #000;
   color: #fff;
   box-sizing: border-box;
-  background-image: url('./assets/Movie2.jpeg'); /* ✅ relative to styles.css */
+  background-image: url('./assets/pexels-image.jpg'); 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+  height: 100vh; /* Full viewport height */
 }
 
 /* === NAVBAR === */
@@ -47,16 +48,23 @@ body {
   color: #fff;
   cursor: pointer;
   font-size: 16px;
-  text-decoration: none; /* No underline */
+  text-decoration:none; /* No underline */
   padding: 8px 12px;
   transition: all 0.3s ease;
   border-radius: 4px;
+  display: inline-block;  
 }
 
 .navbar a:hover,
 .navbar button:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: #00bfff;
+  text-decoration: none; 
+  transition: background-color 0.3s ease, color 0.3s ease;
+  transform: scale(1.05); /* Slightly enlarge on hover */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+  border-radius: 6px; 
+  font-weight: bold; 
 }
 
 /* Call to action button */
@@ -678,13 +686,14 @@ input, textarea {
   margin-top: 6px;
 }
 .feed-welcome-box {
-  background-color: #1a2a44;
+  /*background-color: #1a2a44;*/
   padding: 40px;
   border-radius: 10px;
   text-align: center;
   margin-bottom: 40px;
   max-width: 800px;
   margin: 40px auto;
+  background-color:rgba(26, 42, 68, 0.8); 
 }
 
 .feed-welcome-box h1 {
