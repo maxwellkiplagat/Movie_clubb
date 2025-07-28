@@ -76,7 +76,12 @@ const Login = () => {
           {isLoading ? 'Signing In...' : 'Sign In'}
         </button>
 
-        <p>Don't have an account? <Link to="/register">Join the Community</Link></p>
+        <p className="text-sm text-gray-300 text-center mt-4">
+          Don't have an account? {' '} 
+          <a href="/register" className="join-link">
+            Join the Community
+          </a>
+        </p>
       </form>
     </div>
   );

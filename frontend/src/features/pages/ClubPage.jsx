@@ -19,6 +19,7 @@ const ClubPage = () => {
 
   const [message, setMessage] = useState(null);
   const [hasFetchedMyClubs, setHasFetchedMyClubs] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(''); // ✅ Added search state
 
   useEffect(() => {
     dispatch(clearClubError());
@@ -108,8 +109,16 @@ const ClubPage = () => {
     }
   };
 
+  const filteredMyClubs = myClubs.filter((club) =>
+    club.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const availableClubs = allClubs.filter(
     (club) => !myClubs.some((myClub) => myClub.id === club.id)
+  );
+
+  const filteredAvailableClubs = availableClubs.filter((club) =>
+    club.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (authLoading || isAllClubsLoading || isMyClubsLoading) {
@@ -137,8 +146,22 @@ const ClubPage = () => {
   return (
     <div className="club-page p-6 bg-gray-900 min-h-screen text-white">
       <div className="feed-welcome-box bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
-        <h1 className="text-3xl font-bold mb-3 text-orange-400">Join a Club</h1>
-        <p className="text-gray-300">Find a community that shares your taste in TV shows and movies!</p>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-orange-400">Join a Club</h1>
+            <p className="text-gray-300">Find a community that shares your taste in TV shows and movies!</p>
+          </div>
+          {/* ✅ Search bar at the top right */}
+          <div>
+            <input
+              type="text"
+              placeholder="Search clubs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-bar"
+            />
+          </div>
+        </div>
       </div>
 
       {message && <p className="error text-red-500 text-center">{message}</p>}
@@ -147,14 +170,18 @@ const ClubPage = () => {
         <div className="my-clubs-section mt-8">
           <h2 className="text-xl font-semibold mb-4 text-orange-400">My Clubs</h2>
           <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myClubs.map((club) => (
-              <ClubCard
-                key={club.id}
-                club={club}
-                isJoined={true}
-                onLeave={() => handleLeave(club.id)}
-              />
-            ))}
+            {filteredMyClubs.length > 0 ? (
+              filteredMyClubs.map((club) => (
+                <ClubCard
+                  key={club.id}
+                  club={club}
+                  isJoined={true}
+                  onLeave={() => handleLeave(club.id)}
+                />
+              ))
+            ) : (
+              <p className="text-gray-400 text-center col-span-full">No clubs match your search.</p>
+            )}
           </div>
         </div>
       ) : (
@@ -172,8 +199,8 @@ const ClubPage = () => {
         <h2 className="text-xl font-semibold mb-4 text-orange-400">🌍Explore All Clubs</h2>
         <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {isAllClubsLoading && <p className="text-blue-400 text-center">Loading clubs to explore...</p>}
-          {allClubs.length > 0 ? (
-            availableClubs.map((club) => (
+          {filteredAvailableClubs.length > 0 ? (
+            filteredAvailableClubs.map((club) => (
               <ClubCard
                 key={club.id}
                 club={club}
