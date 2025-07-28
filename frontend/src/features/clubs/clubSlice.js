@@ -1,12 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { logout, fetchUserPosts } from '../auth/authSlice';
+import { logout, fetchUserPosts } from '../auth/authSlice'; // Ensure fetchUserPosts is imported
 
 const API_URL = 'http://127.0.0.1:5000';
 
-// Async Thunks
-
-// Existing Thunks (omitted for brevity, assume they are still here)
-// ... fetchAllClubs, fetchMyClubs, joinClub, leaveClub, fetchClubDetails, fetchClubPosts, createPost, deletePost, fetchFeedPosts ...
+// Async Thunks (Existing thunks are assumed to be here as per your file)
 
 export const fetchAllClubs = createAsyncThunk(
   'clubs/fetchAllClubs',
@@ -218,7 +215,8 @@ export const fetchFeedPosts = createAsyncThunk(
 // NEW THUNK: Toggle Like on a Post
 export const toggleLike = createAsyncThunk(
   'clubs/toggleLike',
-  async (postId, { rejectWithValue, getState }) => {
+  // Pass currentUserId as part of the argument to make it available in the reducer
+  async ({ postId, currentUserId }, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
       if (!token) return rejectWithValue('Authentication required to like/unlike a post.');
@@ -229,15 +227,15 @@ export const toggleLike = createAsyncThunk(
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({}), // Empty body as endpoint doesn't require data
+        body: JSON.stringify({}),
       });
       const data = await response.json();
 
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to toggle like');
       }
-      // The backend now returns { message, likes_count, liked }
-      return { postId, ...data };
+      // Return postId, the new likes_count, the 'liked' status, and the currentUserId
+      return { postId, ...data, currentUserId };
     } catch (error) {
       return rejectWithValue(error.message || 'Network error toggling like');
     }
@@ -356,7 +354,6 @@ const clubSlice = createSlice({
     postDeletionError: null,
     isFeedPostsLoading: false,
     feedPostsError: null,
-    // No specific loading/error states for likes/comments for now, as they are quick operations
   },
   reducers: {
     clearClubError: (state) => {
@@ -432,6 +429,15 @@ const clubSlice = createSlice({
       })
       .addCase(joinClub.fulfilled, (state, action) => {
         state.isLoading = false;
+        // When joining a club, add it to myClubs if it's not already there
+        const joinedClub = action.payload;
+        if (!state.myClubs.some(club => club.id === joinedClub.id)) {
+          state.myClubs.push(joinedClub);
+        }
+        // Optionally update allClubs if needed
+        state.allClubs = state.allClubs.map(club =>
+          club.id === joinedClub.id ? { ...club, is_joined: true } : club
+        );
       })
       .addCase(joinClub.rejected, (state, action) => {
         state.isLoading = false;
@@ -448,6 +454,10 @@ const clubSlice = createSlice({
           state.currentClub = null;
           state.currentClubPosts = [];
         }
+        // Optionally update allClubs if needed
+        state.allClubs = state.allClubs.map(club =>
+          club.id === action.payload ? { ...club, is_joined: false } : club
+        );
       })
       .addCase(leaveClub.rejected, (state, action) => {
         state.isLoading = false;
@@ -483,8 +493,14 @@ const clubSlice = createSlice({
         state.postCreationStatus = 'pending';
         state.postCreationError = null;
       })
-      .addCase(createPost.fulfilled, (state) => {
+      .addCase(createPost.fulfilled, (state, action) => {
         state.postCreationStatus = 'succeeded';
+        // Add the new post to the beginning of currentClubPosts and feedPosts
+        state.currentClubPosts.unshift(action.payload);
+        // Ensure we don't duplicate if feedPosts already includes it (e.g., if it's the same club)
+        if (!state.feedPosts.some(post => post.id === action.payload.id)) {
+            state.feedPosts.unshift(action.payload);
+        }
       })
       .addCase(createPost.rejected, (state, action) => {
         state.postCreationStatus = 'failed';
@@ -518,32 +534,39 @@ const clubSlice = createSlice({
       })
       // NEW: Reducers for toggleLike
       .addCase(toggleLike.fulfilled, (state, action) => {
-        const { postId, likes_count } = action.payload; // Removed 'liked'
-        // Update feedPosts
-        state.feedPosts = updatePostInArray(state.feedPosts, postId, (post) => ({
-          likes_count: likes_count,
-          // The backend response for toggleLike doesn't return the full 'likes' array,
-          // only likes_count and 'liked' status. For a full update of the 'likes' array
-          // on the frontend, you would need to fetch the post again or have the backend
-          // return the updated 'likes' array. For now, we only update the count.
-          // If the backend sends the full `likes` array, you would do:
-          // likes: action.payload.likes // assuming action.payload.likes is the updated array
-        }));
-        // Update currentClubPosts (if applicable)
-        state.currentClubPosts = updatePostInArray(state.currentClubPosts, postId, (post) => ({
-          likes_count: likes_count,
-          // If the backend sends the full `likes` array, you would do:
-          // likes: action.payload.likes
-        }));
+        const { postId, likes_count, liked, currentUserId } = action.payload;
+        
+        // Helper to update a single post within an array
+        const updateSinglePost = (post) => {
+          let updatedLikes = post.likes ? [...post.likes] : [];
+          if (liked) {
+            // Add the current user's like if not already present
+            if (!updatedLikes.some(like => like.user_id === currentUserId)) {
+              // We need the username of the current user to add to the likes array.
+              // It's best to get this from the auth slice or pass it from the component.
+              // For now, we'll assume it's available in auth.user.username.
+              const currentUserUsername = state.auth ? state.auth.user?.username : 'Unknown'; // Fallback
+              updatedLikes.push({ user_id: currentUserId, username: currentUserUsername });
+            }
+          } else {
+            // Remove the current user's like
+            updatedLikes = updatedLikes.filter(like => like.user_id !== currentUserId);
+          }
+          return {
+            likes_count: likes_count,
+            likes: updatedLikes // Update the actual likes array
+          };
+        };
+
+        state.feedPosts = updatePostInArray(state.feedPosts, postId, updateSinglePost);
+        state.currentClubPosts = updatePostInArray(state.currentClubPosts, postId, updateSinglePost);
       })
       // NEW: Reducers for addComment
       .addCase(addComment.fulfilled, (state, action) => {
         const { postId, comment } = action.payload;
-        // Update feedPosts
         state.feedPosts = updatePostInArray(state.feedPosts, postId, (post) => ({
-          comments: [...(post.comments || []), comment], // Add new comment to array
+          comments: [...(post.comments || []), comment],
         }));
-        // Update currentClubPosts (if applicable)
         state.currentClubPosts = updatePostInArray(state.currentClubPosts, postId, (post) => ({
           comments: [...(post.comments || []), comment],
         }));
@@ -551,7 +574,6 @@ const clubSlice = createSlice({
       // NEW: Reducers for deleteComment
       .addCase(deleteComment.fulfilled, (state, action) => {
         const deletedCommentId = action.payload;
-        // Find the post that contained this comment and remove it
         state.feedPosts = state.feedPosts.map(post => {
           if (post.comments && post.comments.some(comment => comment.id === deletedCommentId)) {
             return {
