@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'; // NEW: Import useState
+import React, { useEffect, useState } from 'react'; 
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchFeedPosts } from '../clubs/clubSlice';
@@ -10,7 +10,7 @@ const Feed = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { feedPosts, isFeedPostsLoading, feedPostsError } = useSelector((state) => state.clubs);
 
-  const [hasFetchedFeedPosts, setHasFetchedFeedPosts] = useState(false); // NEW: Local state to prevent re-fetching
+  const [hasFetchedFeedPosts, setHasFetchedFeedPosts] = useState(false); 
 
   // Effect to fetch feed posts
   useEffect(() => {
