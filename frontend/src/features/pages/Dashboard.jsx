@@ -402,7 +402,7 @@ const Dashboard = () => {
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Followers</h2>
         {isFollowersLoading ? (
-            <p className className="text-blue-400 text-center">Loading your followers...</p>
+            <p className ="text-blue-400 text-center">Loading your followers...</p>
         ) : followersError ? (
             <p className="text-red-500 text-center">Error loading followers list: {followersError}</p>
         ) : followers.length === 0 ? (

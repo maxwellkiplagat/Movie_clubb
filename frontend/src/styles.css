@@ -1087,7 +1087,9 @@ a.join-btn:hover {
   background-color: #3b82f6; /* blue-500 */
   color: white;
   font-size: 0.75rem;        /* smaller font */
-  padding: 0.4rem 0.8rem; 
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  border-radius: 4px; 
 } 
 
 /* === Edit Profile Link === */
