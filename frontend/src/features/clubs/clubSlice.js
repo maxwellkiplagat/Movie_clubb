@@ -299,6 +299,35 @@ export const deleteComment = createAsyncThunk(
   }
 );
 
+//NEW THUNK: CREATE CLUB
+export const createClub = createAsyncThunk(
+  "clubs/createClub",
+  async ({ name, description }, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token;
+      if (!token)
+        return rejectWithValue("Authentication required to create a club.");
+
+      const response = await fetch(`${API_URL}/clubs/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name, description }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok)
+        return rejectWithValue(data.message || "Failed to create club");
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || "Network error creating club");
+    }
+  }
+);
+
 
 // Helper function to update a post within an array (used for feedPosts and currentClubPosts)
 const updatePostInArray = (postsArray, postId, updateFn) => {
@@ -574,5 +603,6 @@ export const {
   clearPostDeletionError,
   resetClubState
 } = clubSlice.actions;
+
 
 export default clubSlice.reducer;
