@@ -1,9 +1,8 @@
 // src/components/Navbar.jsx
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../features/auth/authSlice';
-
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -19,13 +18,15 @@ const Navbar = () => {
     <nav className="navbar">
       <span className="logo">CineClub</span>
       <ul>
-        <li><Link to="/feed">Feed</Link></li>
-        <li><Link to="/clubs">Clubs</Link></li>
-        <li><Link to="/watchlist">Watchlist</Link></li>
+        {isAuthenticated && (
+          <li><NavLink to="/dashboard">Dashboard</NavLink></li>
+        )}
+        <li><NavLink to="/feed">Feed</NavLink></li>
+        <li><NavLink to="/clubs">Clubs</NavLink></li>
+        <li><NavLink to="/watchlist">Watchlist</NavLink></li>
 
         {isAuthenticated && (
           <>
-            <li><Link to="/dashboard">Dashboard</Link></li>
             <li>
               <button onClick={handleLogout}>Logout</button>
             </li>
@@ -34,8 +35,8 @@ const Navbar = () => {
 
         {!isAuthenticated && (
           <>
-            <li><Link to="/login">Login</Link></li>
-            <li><Link to="/register" className="join-btn">Join Now</Link></li>
+            <li><NavLink to="/login">Login</NavLink></li>
+            <li><NavLink to="/register" className="join-btn">Join Now</NavLink></li>
           </>
         )}
       </ul>

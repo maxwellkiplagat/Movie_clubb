@@ -20,7 +20,7 @@ const Login = () => {
   useEffect(() => {
     console.log("Login useEffect [isAuthenticated, navigate] triggered."); 
     if (isAuthenticated) {
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/feed';
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
       sessionStorage.removeItem('redirectAfterLogin');
       console.log("Login: Authenticated, navigating to:", redirectPath); 
       navigate(redirectPath);
@@ -38,7 +38,7 @@ const Login = () => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault(); // Crucial: Prevents default form submission
+    e.preventDefault(); 
     console.log("Login: handleSubmit called."); 
     dispatch(clearError());
     console.log("Login.jsx: Dispatching loginUser with:", formData.username);
