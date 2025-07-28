@@ -1,3 +1,8 @@
+/* Tailwind CSS directives - MUST be at the very top for Tailwind to work */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* === GLOBAL === */
 body {
   margin: 0;
@@ -5,32 +10,31 @@ body {
   background-color: #000;
   color: #fff;
   box-sizing: border-box;
-  background-image: url('./assets/action3.jpg'); 
-  background-size:cover ;
+  background-image: url('./assets/action3.jpg');
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-   max-width: 100%; 
-   height: 100%
+  max-width: 100%;
+  height: 100%;
 }
 
 /* NAVBAR*/
 .navbar {
-  background-color: #1a2a44; 
+  background-color: #1a2a44;
   padding: 16px 32px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  
 }
 
 .logo {
   font-size: 24px;
-  color: #ff5733; /* Orange color for logo */
+  color: #ff5733;
   font-weight: bold;
 }
 
 .navbar ul {
   list-style: none;
-  display: flex; /* Keep flex for desktop, but Navbar.jsx handles mobile toggle */
+  display: flex;
   gap: 16px;
   margin: 0;
   padding: 0;
@@ -47,7 +51,7 @@ body {
   color: #fff;
   cursor: pointer;
   font-size: 16px;
-  text-decoration: none; /* No underline */
+  text-decoration: none;
   padding: 8px 12px;
   transition: all 0.3s ease;
   border-radius: 4px;
@@ -60,7 +64,7 @@ body {
   color: #00bfff;
   text-decoration: none;
   transition: background-color 0.3s ease, color 0.3s ease;
-  transform: scale(1.05); /* Slightly enlarge on hover */
+  transform: scale(1.05);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   font-weight: bold;
@@ -88,7 +92,7 @@ body {
 }
 
 .form-container {
-  background: rgba(26, 42, 68, 0.85); /* Semi-transparent */
+  background: rgba(26, 42, 68, 0.7); /* Adjusted transparency */
   padding: 32px;
   border-radius: 8px;
   width: 320px;
@@ -113,8 +117,8 @@ body {
   padding: 8px;
   border: 1px solid #333;
   border-radius: 4px;
-  background-color: #2c3e50; /* Keep input fields solid for readability */
-  color: #fff;
+  background-color: #2c3e50;
+  color: #fff; /* Ensure text is white and visible */
 }
 
 .form-container button {
@@ -139,12 +143,11 @@ body {
 }
 
 /* === PAGE CONTAINERS (General) === */
-/* This .page-container is used in multiple places, ensure it's transparent */
 .page-container {
-  max-width: 1000px; /* Increased max-width for wider content */
+  max-width: 1000px;
   margin: 40px auto;
   padding: 0 16px;
-  background-color: transparent; /* Make transparent to show body background */
+  background-color: transparent; /* Ensure full transparency for main containers */
 }
 
 .page-container h1 {
@@ -168,7 +171,7 @@ body {
 }
 
 .watchlist-content {
-  background: rgba(26, 42, 68, 0.8); /* Semi-transparent */
+  background: rgba(26, 42, 68, 0.7); /* Adjusted transparency */
   padding: 40px;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
@@ -198,18 +201,16 @@ body {
   flex-direction: column;
   gap: 24px;
   margin-top: 32px;
-  /* Removed 'color: transparent;' - it was making text invisible */
 }
 
 .post-card {
-  /* Consolidated and adjusted for transparency */
-  background-color: rgba(26, 42, 68, 0.8); /* Semi-transparent background */
+  background-color: rgba(26, 42, 68, 0.5); /* Adjusted transparency for posts */
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   transition: all 0.3s ease;
-  border: 1px solid rgba(51, 51, 51, 0.8); /* Semi-transparent border */
-  overflow: hidden; /* Keep for image if any */
+  border: 1px solid rgba(51, 51, 51, 0.8);
+  overflow: hidden;
 }
 
 .post-card h2 {
@@ -258,10 +259,29 @@ body {
 }
 
 .post-btn {
-  @apply px-4 py-2 rounded-md bg-[#ff5733] text-white font-semibold
-         hover:bg-[#e04e2c] transition-colors duration-200
-         focus:outline-none focus:ring-2 focus:ring-[#ff5733] focus:ring-opacity-50
-         shadow-md;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.375rem;
+  background-color: #ff5733;
+  color: white;
+  font-weight: 600;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  outline: none;
+}
+
+.post-btn:hover {
+  background-color: #e04e2c;
+}
+
+.post-btn:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(255, 87, 51, 0.5);
 }
 
 textarea {
@@ -270,8 +290,8 @@ textarea {
   padding: 8px;
   border-radius: 4px;
   border: 1px solid #444;
-  background: #2c3e50; /* Keep solid for readability */
-  color: white;
+  background: #2c3e50;
+  color: white; /* Ensure text is white and visible */
 }
 
 input, textarea {
@@ -280,7 +300,7 @@ input, textarea {
 
 /* === FEED WELCOME BOX === */
 .feed-welcome-box {
-  background-color: rgba(26, 42, 68, 0.8); /* Semi-transparent */
+  background-color: rgba(26, 42, 68, 0.5); /* Adjusted transparency for welcome box */
   padding: 40px;
   border-radius: 10px;
   text-align: center;
@@ -333,11 +353,11 @@ input, textarea {
   justify-content: center;
   align-items: center;
   height: 70vh;
-  background-color: transparent; /* Ensure wrapper is transparent */
+  background-color: transparent; /* Ensure full transparency */
 }
 
 .protected-box {
-  background-color: rgba(26, 42, 68, 0.8); /* Semi-transparent */
+  background-color: rgba(26, 42, 68, 0.7); /* Adjusted transparency */
   border-radius: 10px;
   padding: 3rem;
   text-align: center;
@@ -369,7 +389,7 @@ input, textarea {
 /* ===== CLUB PAGE STYLES ===== */
 .club-page {
   padding: 2rem;
-  background-color: transparent; /* Ensure club page container is transparent */
+  background-color: transparent; /* Ensure full transparency */
 }
 
 .club-grid {
@@ -380,8 +400,8 @@ input, textarea {
 }
 
 .club-card {
-  background-color: rgba(31, 41, 55, 0.8); /* Semi-transparent */
-  border: 1px solid rgba(55, 65, 81, 0.8); /* Semi-transparent */
+  background-color: rgba(31, 41, 55, 0.7); /* Adjusted transparency */
+  border: 1px solid rgba(55, 65, 81, 0.8);
   padding: 1.5rem;
   border-radius: 10px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -430,7 +450,7 @@ input, textarea {
 .joined-label {
   display: inline-block;
   padding: 6px 12px;
-  background-color: #22c55e; /* green */
+  background-color: #22c55e;
   color: white;
   font-weight: bold;
   border-radius: 6px;
@@ -439,7 +459,7 @@ input, textarea {
 
 .club-card.joined {
   border: 2px solid #22c55e;
-  background-color: rgba(30, 58, 47, 0.8); /* Semi-transparent */
+  background-color: rgba(30, 58, 47, 0.7); /* Adjusted transparency */
   transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
   cursor: pointer
 }
@@ -454,24 +474,24 @@ input, textarea {
   max-width: 900px;
   margin: 40px auto;
   padding: 0 16px;
-  background-color: transparent; /* Ensure dashboard container is transparent */
+  background-color: transparent; /* Ensure full transparency */
 }
 
 .user-info-box {
-  background-color: rgba(31, 41, 55, 0.8); /* Semi-transparent */
+  background-color: rgba(31, 41, 55, 0.7); /* Adjusted transparency */
   padding: 20px;
   border-radius: 10px;
-  border: 1px solid rgba(55, 65, 81, 0.8); /* Semi-transparent */
+  border: 1px solid rgba(55, 65, 81, 0.8);
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
   margin-top: 16px;
 }
 
 .section {
   margin-top: 50px;
-  background-color: rgba(26, 42, 68, 0.8); /* Semi-transparent */
-  border-radius: 10px; /* Added rounded corners for consistency */
-  padding: 20px; /* Added padding for consistency */
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); /* Added shadow for consistency */
+  background-color: rgba(26, 42, 68, 0.7); /* Adjusted transparency */
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .section-title {
@@ -496,13 +516,13 @@ a.join-btn:hover {
 
 
 /* === CLUBDETAILS SECTION STYLING ====*/
-.club-detail-page-container { /* Renamed from .page-container to avoid conflict */
+.club-detail-page-container {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
   color:#f0f0f0;
   font-family: Arial, sans-serief;
-  background-color: transparent; /* Make transparent */
+  background-color: transparent; /* Ensure full transparency */
 }
 
 .club-name {
@@ -540,14 +560,6 @@ a.join-btn:hover {
   font-style: italic;
   margin-top: 40px;
 }
-
-/* Removed duplicate .feed-list */
-/* .post-card {
-  background-color: #1e1e1e;
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 0 6px rgba(255,255,255,0.05);
-} */
 
 .post-title {
   font-size: 1.2rem;
@@ -603,8 +615,8 @@ a.join-btn:hover {
 .comment-input {
   width: 100%;
   padding: 8px;
-  background-color: #2c2c2c; /* Keep solid for readability */
-  color: white;
+  background-color: #2c2c2c;
+  color: white; /* Ensure text is white and visible */
   border: 1px solid #444;
   border-radius: 4px;
 }
@@ -612,7 +624,7 @@ a.join-btn:hover {
 /* === WATCHLIST CONTAINER === */
 .watchlist-container {
   padding: 2rem;
-  background-color: rgba(15, 23, 42, 0.8); /* Semi-transparent */
+  background-color: rgba(15, 23, 42, 0.7); /* Adjusted transparency */
   min-height: 100vh;
   color: white;
 }
@@ -631,8 +643,8 @@ a.join-btn:hover {
 }
 
 .filter-btn {
-  background-color: rgba(30, 41, 59, 0.8); /* Semi-transparent */
-  border: 1px solid rgba(71, 85, 105, 0.8); /* Semi-transparent */
+  background-color: rgba(30, 41, 59, 0.7); /* Adjusted transparency */
+  border: 1px solid rgba(71, 85, 105, 0.8);
   padding: 0.5rem 1rem;
   border-radius: 8px;
   color: #f1f5f9;
@@ -651,10 +663,10 @@ a.join-btn:hover {
 }
 
 .movie-card {
-  background-color: rgba(30, 41, 59, 0.8); /* Semi-transparent */
+  background-color: rgba(30, 41, 59, 0.7); /* Adjusted transparency */
   padding: 1rem;
   border-radius: 8px;
-  border: 1px solid rgba(51, 65, 85, 0.8); /* Semi-transparent */
+  border: 1px solid rgba(51, 65, 85, 0.8);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -755,12 +767,12 @@ a.join-btn:hover {
 
 /* === LEAVE CLUB BUTTON === */
 .leave-btn {
-  background-color: #dc2626; /* Red-600 */
+  background-color: #dc2626;
   color: white;
-  font-size: 0.875rem; /* Small text */
+  font-size: 0.875rem;
   font-weight: bold;
-  padding: 0.65rem 0.75rem; /* py-1 px-3 */
-  border-radius: 9999px; /* Fully rounded */
+  padding: 0.65rem 0.75rem;
+  border-radius: 9999px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease-in-out;
   transform: scale(1);
@@ -770,19 +782,19 @@ a.join-btn:hover {
 }
 
 .leave-btn:hover {
-  background-color: #b91c1c; /* Red-700 */
+  background-color: #b91c1c;
   transform: scale(1.05);
 }
 
 .leave-btn:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5); /* Red ring */
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5);
 }
 
 /* === JOINED LABEL (for clubs) === */
 .joined-label {
   display: inline-block;
   padding: 6px 12px;
-  background-color: #22c55e; /* green */
+  background-color: #22c55e;
   color: white;
   font-weight: bold;
   border-radius: 6px;
@@ -791,7 +803,7 @@ a.join-btn:hover {
   cursor: default;
 }
 .joined-label:hover {
-  background-color: #15803d; /* Green-700 */
+  background-color: #15803d;
   transform: scale(1.02);
 }
 
@@ -824,15 +836,15 @@ a.join-btn:hover {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1a2a44; /* Dark background matching card */
+  background: #1a2a44;
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4a5a70; /* Slightly lighter gray for thumb */
+  background: #4a5a70;
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6a7a90; /* Even lighter on hover */
+  background: #6a7a90;
 }
