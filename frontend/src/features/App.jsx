@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux'; // Import useDispatch and useSelector
 import { checkSession } from './features/auth/authSlice'; // Import checkSession thunk
-import ForgotPassword from "./pages/ForgotPassword";
 
 import NavBar from "./components/Navbar"; // Corrected to Navbar (lowercase 'b') based on common convention
 import HomePage from "./features/pages/HomePage"; // Assuming you have a HomePage for '/'
@@ -37,35 +36,29 @@ function App() {
       <NavBar />
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<HomePage />} />{" "}
-        {/* Assuming HomePage is your landing */}
-        <Route path="/feed" element={<Feed />} />{" "}
-        {/* Your existing feed route */}
+        <Route path="/" element={<HomePage />} /> {/* Assuming HomePage is your landing */}
+        <Route path="/feed" element={<Feed />} /> {/* Your existing feed route */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+        
         {/* Main Clubs Listing Page - This is the one that was missing! */}
-        <Route path="/clubs" element={<ClubPage />} />
+        <Route path="/clubs" element={<ClubPage />} /> 
+        
         {/* Protected Routes - If PrivateRoute component exists */}
         <Route element={<PrivateRoute />}>
           {/* Individual Club Detail Page - Assuming ClubDetail is a separate component */}
-          <Route path="/clubs/:id" element={<ClubDetail />} />
-          <Route path="/mytracker" element={<MovieTracker />} />{" "}
-          {/* Corrected path based on NavBar */}
+          <Route path="/clubs/:id" element={<ClubDetail />} /> 
+          <Route path="/mytracker" element={<MovieTracker />} /> {/* Corrected path based on NavBar */}
           {/* Add other protected routes like Dashboard here if it's protected */}
           {/* <Route path="/dashboard" element={<Dashboard />} /> */}
         </Route>
+
         {/* Fallback for unhandled routes */}
-        <Route
-          path="*"
-          element={
-            <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-              <h1 className="text-4xl font-bold text-red-500">
-                404 - Page Not Found
-              </h1>
-            </div>
-          }
-        />
+        <Route path="*" element={
+          <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+            <h1 className="text-4xl font-bold text-red-500">404 - Page Not Found</h1>
+          </div>
+        } />
       </Routes>
     </Router>
   );

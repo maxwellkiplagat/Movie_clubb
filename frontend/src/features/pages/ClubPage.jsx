@@ -8,7 +8,6 @@ import {
   joinClub,
   clearClubError,
   leaveClub,
-  createClub,
 } from '../clubs/clubSlice';
 
 const ClubPage = () => {
@@ -21,10 +20,7 @@ const ClubPage = () => {
   const [message, setMessage] = useState(null);
   const [hasFetchedMyClubs, setHasFetchedMyClubs] = useState(false);
   const [searchTerm, setSearchTerm] = useState(''); // ✅ Added search state
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [clubName, setClubName] = useState('');
-  const [description, setDescription] = useState('');
-  
+
   useEffect(() => {
     dispatch(clearClubError());
 
@@ -113,21 +109,6 @@ const ClubPage = () => {
     }
   };
 
-  const handleCreateClub = async (e) => {
-    e.preventDefault();
-    try {
-      await dispatch(createClub({ name: clubName, description })).unwrap();
-      setMessage('Club created successfully!');
-      setShowCreateModal(false);
-      setClubName();
-      setDescription();
-      dispatch(fetchMyClubs());
-      dispatch(fetchAllClubs());
-    } catch (err) {
-      setMessage(`Error creating club: ${err}`);
-    }
-     }
-
   const filteredMyClubs = myClubs.filter((club) =>
     club.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -146,27 +127,6 @@ const ClubPage = () => {
         <p className="text-blue-400 text-xl">Loading clubs...</p>
       </div>
     );
-  }
-   { isAuthenticated && (
-      <button
-        className="bg-blue-500 text-white px-4 py-2 rounded-md mb-4 "
-        onClick={() => setShowCreateModal(true)}
-      >
-        + Create Club
-      </button>
-  )
-  } 
-  <input
-    type="text"
-    placeholder="Search clubs..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-    className="w-full p-2 mb-4 rounded bg-gray-800 text-white"
-  />
-  {
-    filteredAvailableClubs.map((club) => (
-      <ClubCard key={club.id} club={club} />
-    ))
   }
 
   if (error) {
@@ -250,7 +210,7 @@ const ClubPage = () => {
             ))
           ) : (
             !isAllClubsLoading && <p className="text-gray-400 text-center">No clubs available to explore.</p>
-          )}"
+          )}
         </div>
       </div>
     </div>

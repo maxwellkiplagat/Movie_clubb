@@ -21,7 +21,7 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
     username: user?.username || '',
     email: user?.email || '',
     password: '',
-    
+    // BIO FIELD REMOVED FROM HERE as per your instruction
   });
 
   useEffect(() => {
@@ -41,7 +41,7 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
     const dataToSave = {
       username: formData.username,
       email: formData.email,
-      
+      // BIO FIELD REMOVED FROM DATA TO SAVE as per your instruction
     };
     if (formData.password) {
       dataToSave.password = formData.password;
@@ -79,7 +79,7 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
               required
             />
           </div>
-          
+          {/* This is where the bio field was. It's now removed. */}
           <div className="mb-6">
             <label htmlFor="password" className="block text-gray-300 text-sm font-semibold mb-2">New Password (optional):</label>
             <input
@@ -229,7 +229,7 @@ const Dashboard = () => {
     user?.id,
     user?.username,
     user?.email,
-    user?.bio,
+    user?.bio, // Keep this here for the display of bio on the dashboard
     dispatch,
     isMyClubsLoading,
     myClubs,

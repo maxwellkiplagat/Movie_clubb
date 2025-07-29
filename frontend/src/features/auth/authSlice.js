@@ -278,16 +278,6 @@ export const fetchFollowers = createAsyncThunk(
     }
   }
 );
-// NEW THUNK: FORGOT PASSWORD
-export const sendResetLink = createAsyncThunk(
-  'auth/sendResetLink',
-  async (email) => {
-    console.log("Simulating reset email to:", email);
-    // You can add API call here later
-    return email;
-  }
-);
-
 
 
 const authSlice = createSlice({
