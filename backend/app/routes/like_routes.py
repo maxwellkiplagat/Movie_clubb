@@ -2,8 +2,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models.like import Like # Import the Like model
-from app.models.post import Post # Import the Post model
+from app.models.like import Like 
+from app.models.post import Post 
 
 like_bp = Blueprint('like_bp', __name__)
 
@@ -24,10 +24,10 @@ def toggle_like(post_id):
     existing_like = Like.query.filter_by(user_id=current_user_id, post_id=post_id).first()
 
     if existing_like:
-        # If already liked, unlike it
+    
         db.session.delete(existing_like)
         db.session.commit()
-        # Recalculate likes_count after deletion
+    
         likes_count = len(post.likes)
         return jsonify({'message': 'Post unliked successfully', 'likes_count': likes_count, 'liked': False}), 200
     else:
@@ -35,7 +35,7 @@ def toggle_like(post_id):
         new_like = Like(user_id=current_user_id, post_id=post_id)
         db.session.add(new_like)
         db.session.commit()
-        # Recalculate likes_count after addition
+        
         likes_count = len(post.likes)
         return jsonify({'message': 'Post liked successfully', 'likes_count': likes_count, 'liked': True}), 201
 

@@ -110,7 +110,7 @@ def leave_club(club_id):
         return jsonify({"message": f"Successfully left {club.name}"}), 200
     except Exception as e:
         db.session.rollback()
-        print(f"Error leaving club: {e}") # Log the actual error for debugging
+        print(f"Error leaving club: {e}") 
         return jsonify({"message": "An error occurred while leaving the club"}), 500
 
 

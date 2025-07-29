@@ -16,7 +16,7 @@ const Watchlist = () => {
   // Local state for input form
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
-  const [status, setStatus] = useState("plan"); // plan or watched
+  const [status, setStatus] = useState("plan"); 
 
   const handleAdd = (e) => {
     e.preventDefault();
