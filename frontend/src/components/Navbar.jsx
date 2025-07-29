@@ -15,9 +15,9 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
-      <span className="logo">CineClub</span>
-      <ul>
+    <nav className="navbar flex items-center justify-between px-4 py-2 bg-gray-800 text-white">
+      <span className="logo text-xl font-bold">CineClub</span>
+      <ul className="flex space-x-4 ml-auto items-center">
         {isAuthenticated && (
           <li><NavLink to="/dashboard">Dashboard</NavLink></li>
         )}
