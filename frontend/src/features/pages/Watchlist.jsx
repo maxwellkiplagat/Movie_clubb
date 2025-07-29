@@ -81,17 +81,18 @@ const Watchlist = () => {
 
       <ul className="watchlist-list">
         {watchlist.map((movie) => (
+          
           <li key={movie.id} className="watchlist-item">
             <span className="watchlist-title">
               {movie.title} ({movie.genre}) -{" "}
-              {movie.status === "watched" ? "✅ Watched" : "📌 Plan"}
+              {movie.status === "watched" ? " Watched" : " Plan"}
             </span>
             <div className="watchlist-actions">
               <button onClick={() => dispatch(toggleWatchedStatus(movie.id))}>
-                🔁 Toggle
+                Toggle
               </button>
               <button onClick={() => dispatch(removeFromWatchlist(movie.id))}>
-                ❌ Remove
+                 Remove
               </button>
             </div>
           </li>
