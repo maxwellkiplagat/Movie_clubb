@@ -9,12 +9,14 @@ const PostCard = ({ post }) => {
   const { user: currentUser, following: followingListFromRedux, isAuthenticated } = useSelector((state) => state.auth);
 
   // Determine if the current user has liked this post
+  // This will now correctly reflect changes because the 'likes' array in Redux is updated
   const hasLiked = post.likes && currentUser ? post.likes.some(like => like.user_id === currentUser.id) : false;
 
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [newCommentContent, setNewCommentContent] = useState('');
 
-  const isFollowing = followingListFromRedux.some(followedUser => followedUser.id === post.author_id);
+  // Ensure followingListFromRedux is an array before using .some()
+  const isFollowing = (followingListFromRedux || []).some(followedUser => followedUser.id === post.author_id);
   const isOwnPost = currentUser && currentUser.id === post.author_id;
 
   // Fetch following list when currentUser changes
@@ -31,7 +33,8 @@ const PostCard = ({ post }) => {
       return;
     }
     try {
-      await dispatch(toggleLike(post.id)).unwrap();
+      // Pass currentUserId to the thunk
+      await dispatch(toggleLike({ postId: post.id, currentUserId: currentUser.id })).unwrap();
       console.log(`Successfully toggled like for post ${post.id}`);
     } catch (error) {
       console.error("Failed to toggle like:", error);
@@ -69,6 +72,7 @@ const PostCard = ({ post }) => {
   };
 
   const handleDeletePost = async () => {
+    // Replaced window.confirm with a simple alert for now as per instructions to avoid window.confirm
     if (!window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
       return;
     }
@@ -106,6 +110,7 @@ const PostCard = ({ post }) => {
       alert("Please log in to delete comments.");
       return;
     }
+    // Replaced window.confirm with a simple alert for now as per instructions to avoid window.confirm
     if (!window.confirm("Are you sure you want to delete this comment?")) {
       return;
     }
@@ -131,21 +136,42 @@ const PostCard = ({ post }) => {
         <span>{post.created_at ? new Date(post.created_at).toLocaleDateString() : 'Invalid Date'}</span>
       </div>
 
-      {/* Buttons - Improved Grid Layout */}
+      {/* Buttons - Improved Grid Layout and Styling */}
       <div className="post-actions grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4">
-        <button onClick={handleToggleLike} className="post-btn">
+        <button
+          onClick={handleToggleLike}
+          className={`
+            px-4 py-2 rounded-full font-bold shadow-md transition duration-300 ease-in-out
+            transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75
+            ${hasLiked ? 'bg-blue-700 hover:bg-blue-800 focus:ring-blue-600' : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'}
+            text-white
+          `}
+        >
           {hasLiked ? 'Unlike' : 'Like'} ({post.likes_count || 0})
         </button>
 
         <button
           onClick={handleFollow}
-          className="post-btn"
+          className="
+            px-4 py-2 rounded-full bg-purple-600 text-white font-bold
+            hover:bg-purple-700 transition duration-300 ease-in-out
+            transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75
+            shadow-md
+          "
           disabled={isOwnPost || !isAuthenticated}
         >
-          {isOwnPost ? 'Your Post' : (isFollowing ? 'Unfollow' : 'Follow')} @{post.author_username}
+          {isOwnPost ? 'Your Post' : (isFollowing ? 'Unfollow' : 'Follow')}
         </button>
 
-        <button onClick={() => setCommentsVisible(prev => !prev)} className="post-btn">
+        <button
+          onClick={() => setCommentsVisible(prev => !prev)}
+          className="
+            px-4 py-2 rounded-full bg-gray-600 text-white font-bold
+            hover:bg-gray-700 transition duration-300 ease-in-out
+            transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75
+            shadow-md
+          "
+        >
           {commentsVisible ? 'Hide Comments' : `Show Comments (${post.comments ? post.comments.length : 0})`}
         </button>
 
@@ -153,8 +179,10 @@ const PostCard = ({ post }) => {
           <button
             onClick={handleDeletePost}
             className="
-              post-btn bg-red-600 hover:bg-red-700 text-white
-              border border-red-500 hover:border-red-700
+              px-4 py-2 rounded-full bg-red-600 text-white font-bold
+              hover:bg-red-700 transition duration-300 ease-in-out
+              transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75
+              shadow-md
             "
           >
             Delete Post
@@ -170,7 +198,7 @@ const PostCard = ({ post }) => {
           {post.comments && post.comments.length === 0 ? (
             <p className="text-gray-400">No comments yet.</p>
           ) : (
-            <ul className="space-y-2 mb-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar"> {/* Added max-h and overflow */}
+            <ul className="space-y-2 mb-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
               {post.comments && post.comments.map((comment) => (
                 <li key={comment.id} className="
                   text-sm text-gray-200 flex justify-between items-start p-2 rounded-md bg-[#2c3e50] border border-gray-600
@@ -204,7 +232,12 @@ const PostCard = ({ post }) => {
               />
               <button
                 type="submit"
-                className="post-btn w-full sm:w-auto" // Make button full width on small screens
+                className="
+                  w-full sm:w-auto px-4 py-2 rounded-full bg-blue-600 text-white font-bold
+                  hover:bg-blue-700 transition duration-300 ease-in-out
+                  transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75
+                  shadow-md
+                "
               >
                 Add Comment
               </button>

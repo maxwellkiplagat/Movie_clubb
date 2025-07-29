@@ -10,7 +10,7 @@ const Feed = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { feedPosts, isFeedPostsLoading, feedPostsError } = useSelector((state) => state.clubs);
 
-  const [hasFetchedFeedPosts, setHasFetchedFeedPosts] = useState(false);
+  const [hasFetchedFeedPosts, setHasFetchedFeedPosts] = useState(false); 
 
   
   useEffect(() => {
