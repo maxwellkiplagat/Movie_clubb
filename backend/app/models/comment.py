@@ -25,7 +25,7 @@ class Comment(db.Model):
             'id': self.id,
             'content': self.content,
             'user_id': self.user_id,
-            'username': username, # Include username of the comment author
+            'username': username, 
             'post_id': self.post_id,
             'created_at': self.created_at.isoformat()
         }

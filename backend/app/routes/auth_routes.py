@@ -40,7 +40,7 @@ class UserRegistration(Resource):
             }), 201) #new user created successfully
         except Exception as e:
             db.session.rollback()
-            return {'message': f'Error registering user: {str(e)}'}, 500 #internal server error
+            return {'message': f'Error registering user: {str(e)}'}, 500 
         
 class UserLogin(Resource):
     """
