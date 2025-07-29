@@ -146,7 +146,8 @@ const ClubPage = () => {
   return (
     <div className="club-page p-6 bg-gray-900 min-h-screen text-white">
       <div className="feed-welcome-box bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div className="flex flex-col gap-4">
+
           <div>
             <h1 className="text-3xl font-bold mb-2 text-orange-400">Join a Club</h1>
             <p className="text-gray-300">Find a community that shares your taste in TV shows and movies!</p>
