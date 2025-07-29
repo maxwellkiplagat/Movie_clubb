@@ -123,7 +123,7 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
   );
 };
 
-
+// Dashboard Component
 const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
