@@ -51,7 +51,7 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
         comments_data = [{
             'id': comment.id,
             'user_id': comment.user_id,
-            'username': comment.user.username if comment.user else 'Unknown', # Access username via backref from Comment model
+            'username': comment.user.username if comment.user else 'Unknown', 
             'content': comment.content,
             'created_at': comment.created_at.isoformat()
         } for comment in self.comments]

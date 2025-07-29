@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'; // NEW: Import useState
+import React, { useEffect, useState } from 'react'; 
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchFeedPosts } from '../clubs/clubSlice';
@@ -10,28 +10,28 @@ const Feed = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { feedPosts, isFeedPostsLoading, feedPostsError } = useSelector((state) => state.clubs);
 
-  const [hasFetchedFeedPosts, setHasFetchedFeedPosts] = useState(false); // NEW: Local state to prevent re-fetching
+  const [hasFetchedFeedPosts, setHasFetchedFeedPosts] = useState(false);
 
-  // Effect to fetch feed posts
+  
   useEffect(() => {
     console.log("Feed useEffect: Checking fetch conditions. isAuthenticated:", isAuthenticated, "hasFetchedFeedPosts:", hasFetchedFeedPosts);
-    // Fetch feed posts only if authenticated AND we haven't fetched them yet
+    
     if (isAuthenticated && !hasFetchedFeedPosts) {
       console.log("Feed useEffect: Authenticated and not yet fetched, dispatching fetchFeedPosts.");
       dispatch(fetchFeedPosts());
-      setHasFetchedFeedPosts(true); // Set flag to true immediately after dispatching
+      setHasFetchedFeedPosts(true); 
     }
-    // If user logs out, reset the flag so posts can be fetched again on next login
+    
     if (!isAuthenticated && hasFetchedFeedPosts) {
         console.log("Feed useEffect: Not authenticated, resetting hasFetchedFeedPosts.");
         setHasFetchedFeedPosts(false);
     }
-  }, [isAuthenticated, hasFetchedFeedPosts, dispatch]); // Dependencies: isAuthenticated and hasFetchedFeedPosts
+  }, [isAuthenticated, hasFetchedFeedPosts, dispatch]); 
 
   const sortedFeedPosts = [...feedPosts].sort((a, b) => {
     const dateA = new Date(a.created_at);
     const dateB = new Date(b.created_at);
-    return dateB - dateA; // Descending order
+    return dateB - dateA; 
   });
 
   return (
@@ -58,12 +58,12 @@ const Feed = () => {
         )}
       </div>
 
-      {/* Global Feed Section */}
+      
       {isAuthenticated ? (
         <div className="global-feed-section mt-8 p-6 bg-gray-900 rounded-lg shadow-lg text-white">
           <h2 className="text-2xl font-bold text-orange-400 mb-6 text-center">Global Posts Feed</h2>
 
-          {isFeedPostsLoading ? ( // Use isFeedPostsLoading for immediate loading state
+          {isFeedPostsLoading ? ( 
             <p className="text-blue-400 text-center">Loading posts...</p>
           ) : feedPostsError ? (
             <p className="text-red-500 text-center">Error loading feed: {feedPostsError}</p>
