@@ -16,45 +16,6 @@ def get_all_clubs():
     clubs = Club.query.all()
     return jsonify([club.to_dict() for club in clubs]), 200
 
-# Route to create a new club
-@club_bp.route('/', methods=['POST'])
-@jwt_required()
-def create_club():
-    """
-    Allows an authenticated user to create a new club.
-    Requires 'name', 'description', and 'genre' in the request body.
-    """
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-
-    if not user:
-        return jsonify({"message": "User not found"}), 404
-
-    data = request.get_json()
-    name = data.get('name')
-    description = data.get('description')
-    genre = data.get('genre')
-
-    if not name or not description or not genre:
-        return jsonify({"message": "Name, description, and genre are required"}), 400
-
-    # Check if club name already exists
-    existing_club = Club.query.filter_by(name=name).first()
-    if existing_club:
-        return jsonify({"message": "Club with this name already exists"}), 409 # Conflict
-
-    new_club = Club(
-        name=name,
-        description=description,
-        genre=genre,
-        created_by_user_id=user.id
-    )
-    db.session.add(new_club)
-    db.session.commit()
-
-    return jsonify(new_club.to_dict()), 201
-
-
 @club_bp.route('/<int:club_id>/join', methods=['POST'])
 @jwt_required()
 def join_club(club_id):

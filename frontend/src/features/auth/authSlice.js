@@ -324,6 +324,35 @@ export const fetchFollowers = createAsyncThunk(
   }
 );
 
+/**
+ * Sends a password reset email to the provided email address.
+ * @param {string} email - The email address to send the reset link to.
+ * @returns {Object} A success message from the backend.
+ */
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (email, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot_password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Backend might return a specific error message
+        return rejectWithValue(data.message || 'Failed to send password reset email.');
+      }
+
+      // Backend should return a success message
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Network error during password reset request.');
+    }
+  }
+);
 
 // Helper function to update a post within an array (used for userPosts)
 const updatePostInArray = (postsArray, postId, updateFn) => {
@@ -519,6 +548,21 @@ const authSlice = createSlice({
         state.isFollowersLoading = false;
         state.followersError = action.payload;
         state.followers = [];
+      })
+
+      // --- NEW: Handle forgotPassword thunk ---
+      .addCase(forgotPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+        // You might want to store a success message here, or handle it in the component
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       })
 
       // --- NEW: Handle updates to userPosts from clubSlice actions ---

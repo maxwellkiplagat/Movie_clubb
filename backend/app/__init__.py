@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 from datetime import timedelta
 import traceback
+from flask_mail import Mail # NEW: Import Flask-Mail
 
 load_dotenv()
 
@@ -18,6 +19,7 @@ api = Api()
 bcrypt = Bcrypt()
 jwt = JWTManager()
 migrate = Migrate()
+mail = Mail() # NEW: Initialize Flask-Mail
 
 def create_app():
     # Create and configure the Flask application
@@ -28,6 +30,15 @@ def create_app():
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
+    # NEW: Flask-Mail Configuration
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587)) # Default to 587 for TLS
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
+    app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER') # The email address emails will be sent from
+
     # Initialize CORS directly with the app instance here
     CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 
@@ -37,6 +48,7 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
+    mail.init_app(app) # NEW: Initialize Flask-Mail with the app
 
     # Import models to ensure they are registered with SQLAlchemy
     from .models.user import User
@@ -48,7 +60,7 @@ def create_app():
     from .models.follow import Follow
     from .models.club_member import ClubMember
     from .models.like import Like
-    from .models.comment import Comment # Ensure this is here
+    from .models.comment import Comment
 
     # Register error handlers
     @app.errorhandler(404)
@@ -75,10 +87,13 @@ def create_app():
         return jsonify(message="Welcome to the TV Series & Movies Club API!")
 
     # Register API resources (Flask-RESTful)
-    from .routes.auth_routes import UserRegistration, UserLogin, CheckSession
+    # NEW: Import ForgotPassword and ResetPassword
+    from .routes.auth_routes import UserRegistration, UserLogin, CheckSession, ForgotPassword, ResetPassword
     api.add_resource(UserRegistration, '/auth/register')
     api.add_resource(UserLogin, '/auth/login')
     api.add_resource(CheckSession, '/auth/check_session')
+    api.add_resource(ForgotPassword, '/auth/forgot_password') # NEW: Add ForgotPassword resource
+    api.add_resource(ResetPassword, '/auth/reset_password')   # NEW: Add ResetPassword resource
 
     # Register Flask Blueprints
     from .routes.club_routes import club_bp
@@ -98,6 +113,6 @@ def create_app():
 
     # NEW: Register the comment_bp blueprint
     from .routes.comment_routes import comment_bp
-    app.register_blueprint(comment_bp, url_prefix='') # Prefix to make routes like /posts/<id>/comments or /comments/<id>
+    app.register_blueprint(comment_bp, url_prefix='')
 
     return app

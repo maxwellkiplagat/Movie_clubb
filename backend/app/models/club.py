@@ -1,7 +1,7 @@
-from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.hybrid import hybrid_property # Keep if used elsewhere, otherwise can remove
 from sqlalchemy_serializer import SerializerMixin
 from .. import db
-from .__init__ import BaseModelMixin
+from .__init__ import BaseModelMixin # Assuming BaseModelMixin is still relevant
 from datetime import datetime
 
 class Club(BaseModelMixin, SerializerMixin, db.Model):
@@ -14,21 +14,22 @@ class Club(BaseModelMixin, SerializerMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    created_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    # REMOVED: created_by_user_id column
+    # created_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     # Relationships
-    creator = db.relationship('User', back_populates='clubs_created')
+    # REMOVED: creator relationship
+    # creator = db.relationship('User', back_populates='clubs_created')
     members = db.relationship('ClubMember', back_populates='club', lazy=True, cascade='all, delete-orphan')
-    # MODIFIED: Added cascade='all, delete-orphan' to the posts relationship
     posts = db.relationship('Post', back_populates='club', lazy=True, cascade='all, delete-orphan') 
 
     serialize_rules = (
         '-created_at', 
         '-updated_at',
-        '-creator.password_hash', # Exclude password hash from creator
+        # REMOVED: '-creator.password_hash',
         '-members.club', # Prevent recursion
         '-posts.club',   # Prevent recursion when serializing posts
-        'creator.username', # Include creator's username
+        # REMOVED: 'creator.username', # No longer include creator's username
     )
 
     def to_dict(self):
@@ -40,8 +41,8 @@ class Club(BaseModelMixin, SerializerMixin, db.Model):
             'genre': self.genre,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'created_by_user_id': self.created_by_user_id,
-            'creator_username': self.creator.username if self.creator else None,
+            # REMOVED: 'created_by_user_id': self.created_by_user_id,
+            # REMOVED: 'creator_username': self.creator.username if self.creator else None,
             'member_count': len(self.members) # Include member count
         }
         return data
