@@ -16,7 +16,7 @@ def get_all_clubs():
     clubs = Club.query.all()
     return jsonify([club.to_dict() for club in clubs]), 200
 
-# Route to create a new club
+
 @club_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_club():
