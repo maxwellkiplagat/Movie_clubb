@@ -47,7 +47,7 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
         # NEW: Include likes count
         data['likes_count'] = len(self.likes)
 
-        # NEW: Prepare comments to be included in the post dict
+        
         comments_data = [{
             'id': comment.id,
             'user_id': comment.user_id,
