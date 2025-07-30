@@ -14,7 +14,7 @@ const watchlistSlice = createSlice({
       if (!exists) {
         state.movies.push({
           ...movie,
-          status: 'planned', // default status when adding
+          status: 'planned', 
         });
       }
     },

@@ -16,23 +16,23 @@ function CreatePostInClub() {
   const [movieTitle, setMovieTitle] = useState('');
   const [content, setContent] = useState('');
   const [localMessage, setLocalMessage] = useState(null);
-  const [isPostSuccessDisplayed, setIsPostSuccessDisplayed] = useState(false); // NEW: State to control success display/navigation
+  const [isPostSuccessDisplayed, setIsPostSuccessDisplayed] = useState(false); 
 
   const { postCreationStatus, postCreationError } = useSelector((state) => state.clubs);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
-  // Effect to handle post creation status (Redux state)
+  
   useEffect(() => {
     console.log("CreatePostInClub useEffect [postCreationStatus]: Status changed to:", postCreationStatus);
 
     if (postCreationStatus === 'succeeded') {
-      // Immediately reset Redux status to 'idle' to prevent re-triggering this effect
+      
       dispatch(setPostCreationStatus('idle'));
 
-      // Trigger the local success message display and navigation flow
+      
       setIsPostSuccessDisplayed(true);
 
-      // Dispatch fetchUserPosts to update the dashboard's 'My Posts' section
+      
       if (user?.id) {
         console.log("CreatePostInClub useEffect [postCreationStatus]: Dispatching fetchUserPosts to update dashboard.");
         dispatch(fetchUserPosts(user.id));
@@ -47,31 +47,31 @@ function CreatePostInClub() {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [postCreationStatus, postCreationError, dispatch, user?.id]); // Removed id, navigate from dependencies here
+  }, [postCreationStatus, postCreationError, dispatch, user?.id]); 
 
-  // NEW Effect for handling local success message display and navigation (triggered by isPostSuccessDisplayed)
+  
   useEffect(() => {
     if (isPostSuccessDisplayed) {
       console.log("CreatePostInClub useEffect [isPostSuccessDisplayed]: Post success detected. Displaying message and setting navigation timer.");
-      setLocalMessage('Post created successfully!'); // Set local message for display
+      setLocalMessage('Post created successfully!'); 
 
       const timer = setTimeout(() => {
         console.log("CreatePostInClub useEffect [isPostSuccessDisplayed]: Inside setTimeout - preparing to navigate.");
-        setLocalMessage(null); // Clear message before navigating
-        setIsPostSuccessDisplayed(false); // Reset this flag to allow future posts
+        setLocalMessage(null); 
+        setIsPostSuccessDisplayed(false); 
         console.log(`CreatePostInClub useEffect [isPostSuccessDisplayed]: Navigating to /clubs/${id}`);
-        navigate(`/clubs/${id}`); // Perform navigation
+        navigate(`/clubs/${id}`); 
         console.log("CreatePostInClub useEffect [isPostSuccessDisplayed]: Navigation call executed.");
-      }, 1500); // Display message for 1.5 seconds
+      }, 1500); 
 
       return () => {
         console.log("CreatePostInClub useEffect [isPostSuccessDisplayed]: Cleaning up setTimeout.");
-        clearTimeout(timer); // Cleanup timeout
+        clearTimeout(timer); 
       };
     }
-  }, [isPostSuccessDisplayed, id, navigate]); // Dependencies for this new effect
+  }, [isPostSuccessDisplayed, id, navigate]); 
 
-  // Effect for authentication redirect (remains separate)
+  
   useEffect(() => {
     if (!isAuthenticated) {
       console.log("CreatePostInClub useEffect [isAuthenticated]: Not authenticated, redirecting to login.");
@@ -82,8 +82,8 @@ function CreatePostInClub() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLocalMessage(null); // Clear any previous local message on new submission
-    setIsPostSuccessDisplayed(false); // Reset this flag on new submission
+    setLocalMessage(null); 
+    setIsPostSuccessDisplayed(false); 
 
     if (!movieTitle || !content) {
       setLocalMessage('Please fill in both movie title and your thoughts.');
@@ -107,7 +107,7 @@ function CreatePostInClub() {
       >
         <h2 className="text-2xl font-bold text-orange-400 mb-6 text-center">Create Post in Club #{id}</h2>
 
-        {/* Display local message (success or error) */}
+        {}
         {localMessage && (
           <p className={`text-center mb-4 ${isPostSuccessDisplayed ? 'text-green-500' : 'text-red-500'}`}>
             {localMessage}
@@ -142,7 +142,7 @@ function CreatePostInClub() {
             disabled={postCreationStatus === 'pending'}
           />
         </div>
-{/* Submit Button */}
+{}
         <button
           type="submit"
           className={`
