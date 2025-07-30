@@ -12,12 +12,12 @@ import {
   fetchFollowing,
   fetchFollowers,
 } from '../features/auth/authSlice';
-import { addToWatchlist } from '../features/Watchlist/watchlistSlice'; // ✅ Import
+import { addToWatchlist } from '../features/Watchlist/watchlistSlice'; 
 
 const PostCard = ({ post }) => {
   const dispatch = useDispatch();
   const { user, isAuthenticated, following } = useSelector((state) => state.auth);
-  const watchlist = useSelector((state) => state.watchlist.movies); // ✅ Get watchlist
+  const watchlist = useSelector((state) => state.watchlist.movies); 
 
   const [newComment, setNewComment] = useState('');
   const [showComments, setShowComments] = useState(false);
@@ -26,7 +26,7 @@ const PostCard = ({ post }) => {
   const isAuthor = post.user_id === user?.id;
   const isFollowingAuthor = following?.some((f) => f.id === post.user_id);
 
-  const alreadyInWatchlist = watchlist.some((movie) => movie.id === post.id); // ✅ Prevent duplicates
+  const alreadyInWatchlist = watchlist.some((movie) => movie.id === post.id); 
 
   const handleLikeToggle = async () => {
     if (!user) return console.error('Please log in to like posts.');
@@ -34,7 +34,7 @@ const PostCard = ({ post }) => {
     try {
       await dispatch(toggleLike({ postId: post.id, currentUserId: user.id })).unwrap();
 
-      // ✅ Add to watchlist when liked
+      g
       if (!isLiked && !alreadyInWatchlist) {
         dispatch(addToWatchlist({
           id: post.id,

@@ -152,7 +152,7 @@ const ClubPage = () => {
             <h1 className="text-3xl font-bold mb-2 text-orange-400">Join a Club</h1>
             <p className="text-gray-300">Find a community that shares your taste in TV shows and movies!</p>
           </div>
-          {/* ✅ Search bar at the top right */}
+          {}
           <div>
             <input
               type="text"

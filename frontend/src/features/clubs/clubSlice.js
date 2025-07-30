@@ -3,7 +3,6 @@ import { logout, fetchUserPosts } from '../auth/authSlice';
 
 const API_URL = 'http://127.0.0.1:5000';
 
-// Async Thunks (Existing thunks are assumed to be here as per your file)
 
 export const fetchAllClubs = createAsyncThunk(
   'clubs/fetchAllClubs',
@@ -182,10 +181,10 @@ export const deletePost = createAsyncThunk(
 
       const userId = getState().auth.user?.id;
       if (userId) {
-        dispatch(fetchUserPosts(userId)); // Refresh user's own posts on dashboard
+        dispatch(fetchUserPosts(userId)); 
       }
 
-      return postId; // Return the ID of the deleted post
+      return postId; 
     } catch (error) {
       return rejectWithValue(error.message || 'Network error deleting post');
     }
@@ -214,13 +213,12 @@ export const fetchFeedPosts = createAsyncThunk(
 );
 
 
-// NEW THUNK: Toggle Like on a Post - Now includes currentUserUsername in payload
 export const toggleLike = createAsyncThunk(
   'clubs/toggleLike',
   async ({ postId, currentUserId }, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
-      const currentUserUsername = getState().auth.user?.username; // Get username here
+      const currentUserUsername = getState().auth.user?.username; 
       if (!token) return rejectWithValue('Authentication required to like/unlike a post.');
 
       const response = await fetch(`${API_URL}/posts/${postId}/like`, {
@@ -236,15 +234,14 @@ export const toggleLike = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to toggle like');
       }
-      // Return postId, the new likes_count, the 'liked' status, and the currentUserId, AND the currentUsername
-      return { postId, ...data, currentUserId, currentUserUsername }; // Include username
+      return { postId, ...data, currentUserId, currentUserUsername }; 
     } catch (error) {
       return rejectWithValue(error.message || 'Network error toggling like');
     }
   }
 );
 
-// NEW THUNK: Add a Comment to a Post
+
 export const addComment = createAsyncThunk(
   'clubs/addComment',
   async ({ postId, content }, { rejectWithValue, getState }) => {
@@ -265,14 +262,14 @@ export const addComment = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to add comment');
       }
-      return { postId, comment: data }; // Return postId and the new comment data
+      return { postId, comment: data }; 
     } catch (error) {
       return rejectWithValue(error.message || 'Network error adding comment');
     }
   }
 );
 
-// NEW THUNK: Delete a Comment
+
 export const deleteComment = createAsyncThunk(
   'clubs/deleteComment',
   async (commentId, { rejectWithValue, getState }) => {
@@ -292,7 +289,7 @@ export const deleteComment = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to delete comment');
       }
-      return commentId; // Return the ID of the deleted comment
+      return commentId; 
     } catch (error) {
       return rejectWithValue(error.message || 'Network error deleting comment');
     }
@@ -300,9 +297,7 @@ export const deleteComment = createAsyncThunk(
 );
 
 
-// REMOVED: updatePostInArray helper function as its logic is now inlined for better immutability.
 
-// Slice
 const clubSlice = createSlice({
   name: 'clubs',
   initialState: {
@@ -322,7 +317,7 @@ const clubSlice = createSlice({
     postDeletionError: null,
     isFeedPostsLoading: false,
     feedPostsError: null,
-    // hasFetched flags for dashboard looping fix
+    
     hasFetchedAllClubs: false,
     hasFetchedMyClubs: false,
     hasFetchedClubPosts: false,
@@ -352,7 +347,7 @@ const clubSlice = createSlice({
       state.postDeletionError = null;
     },
     resetClubState: (state) => {
-      // Also reset hasFetched flags on logout/reset
+      
       state.allClubs = [];
       state.myClubs = [];
       state.currentClub = null;
@@ -384,12 +379,12 @@ const clubSlice = createSlice({
       .addCase(fetchAllClubs.fulfilled, (state, action) => {
         state.isAllClubsLoading = false;
         state.allClubs = action.payload;
-        state.hasFetchedAllClubs = true; // Set flag
+        state.hasFetchedAllClubs = true; 
       })
       .addCase(fetchAllClubs.rejected, (state, action) => {
         state.isAllClubsLoading = false;
         state.error = action.payload;
-        state.hasFetchedAllClubs = true; // Set flag even on error to prevent re-loop
+        state.hasFetchedAllClubs = true; 
       })
       .addCase(fetchMyClubs.pending, (state) => {
         state.isMyClubsLoading = true;
@@ -398,12 +393,12 @@ const clubSlice = createSlice({
       .addCase(fetchMyClubs.fulfilled, (state, action) => {
         state.isMyClubsLoading = false;
         state.myClubs = action.payload;
-        state.hasFetchedMyClubs = true; // Set flag
+        state.hasFetchedMyClubs = true; 
       })
       .addCase(fetchMyClubs.rejected, (state, action) => {
         state.isMyClubsLoading = false;
         state.error = action.payload;
-        state.hasFetchedMyClubs = true; // Set flag even on error
+        state.hasFetchedMyClubs = true; 
       })
       .addCase(joinClub.pending, (state) => {
         state.isLoading = true;
@@ -463,12 +458,12 @@ const clubSlice = createSlice({
       .addCase(fetchClubPosts.fulfilled, (state, action) => {
         state.isLoading = false;
         state.currentClubPosts = action.payload;
-        state.hasFetchedClubPosts = true; // Set flag
+        state.hasFetchedClubPosts = true; 
       })
       .addCase(fetchClubPosts.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-        state.hasFetchedClubPosts = true; // Set flag even on error
+        state.hasFetchedClubPosts = true; 
       })
       .addCase(createPost.pending, (state) => {
         state.postCreationStatus = 'pending';
@@ -506,41 +501,41 @@ const clubSlice = createSlice({
       .addCase(fetchFeedPosts.fulfilled, (state, action) => {
         state.isFeedPostsLoading = false;
         state.feedPosts = action.payload;
-        state.hasFetchedFeedPosts = true; // Set flag
+        state.hasFetchedFeedPosts = true; 
       })
       .addCase(fetchFeedPosts.rejected, (state, action) => {
         state.isFeedPostsLoading = false;
         state.feedPostsError = action.payload;
-        state.hasFetchedFeedPosts = true; // Set flag even on error
+        state.hasFetchedFeedPosts = true; 
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
-        const { postId, likes_count, liked, currentUserId, currentUserUsername } = action.payload; // Destructure currentUserUsername from payload
+        const { postId, likes_count, liked, currentUserId, currentUserUsername } = action.payload; 
         
-        // Helper to update a single post's likes and likes_count immutably
+        
         const updatePostLikes = (post) => {
-          let updatedLikes = post.likes ? [...post.likes] : []; // Create new array for likes
+          let updatedLikes = post.likes ? [...post.likes] : []; 
 
           if (liked) {
-            // Add like if not already present
+            
             if (!updatedLikes.some(like => like.user_id === currentUserId)) {
-              updatedLikes.push({ user_id: currentUserId, username: currentUserUsername || 'Unknown' }); // Use payload username
+              updatedLikes.push({ user_id: currentUserId, username: currentUserUsername || 'Unknown' }); 
             }
           } else {
-            // Remove like
+            
             updatedLikes = updatedLikes.filter(like => like.user_id !== currentUserId);
           }
           return {
-            ...post, // Create new post object for immutability
+            ...post, 
             likes_count: likes_count,
-            likes: updatedLikes // Assign the new likes array
+            likes: updatedLikes 
           };
         };
 
-        // Update feedPosts immutably
+        
         state.feedPosts = state.feedPosts.map(post =>
           post.id === postId ? updatePostLikes(post) : post
         );
-        // Update currentClubPosts immutably
+        
         state.currentClubPosts = state.currentClubPosts.map(post =>
           post.id === postId ? updatePostLikes(post) : post
         );
@@ -551,7 +546,7 @@ const clubSlice = createSlice({
           if (post.id === postId) {
             return {
               ...post,
-              comments: [...(post.comments || []), comment], // Ensure new array reference for comments
+              comments: [...(post.comments || []), comment], 
             };
           }
           return post;
@@ -560,7 +555,7 @@ const clubSlice = createSlice({
           if (post.id === postId) {
             return {
               ...post,
-              comments: [...(post.comments || []), comment], // Ensure new array reference for comments
+              comments: [...(post.comments || []), comment], 
             };
           }
           return post;
@@ -572,7 +567,7 @@ const clubSlice = createSlice({
           if (post.comments && post.comments.some(comment => comment.id === deletedCommentId)) {
             return {
               ...post,
-              comments: post.comments.filter(comment => comment.id !== deletedCommentId) // Ensure new array reference for comments
+              comments: post.comments.filter(comment => comment.id !== deletedCommentId) 
             };
           }
           return post;
@@ -581,7 +576,7 @@ const clubSlice = createSlice({
           if (post.comments && post.comments.some(comment => comment.id === deletedCommentId)) {
             return {
               ...post,
-              comments: post.comments.filter(comment => comment.id !== deletedCommentId) // Ensure new array reference for comments
+              comments: post.comments.filter(comment => comment.id !== deletedCommentId) 
             };
           }
           return post;

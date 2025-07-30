@@ -57,7 +57,7 @@ const ClubCard = ({ club, onJoin = () => {}, onLeave = () => {}, isJoined }) => 
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onJoin(); // This handles login redirection if not authenticated
+            onJoin(); 
           }}
           className="
             join-btn

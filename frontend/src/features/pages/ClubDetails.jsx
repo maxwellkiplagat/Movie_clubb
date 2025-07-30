@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom'; // REMOVED: useLocation
+import { useParams, Link, useNavigate } from 'react-router-dom'; 
 import { useSelector, useDispatch } from 'react-redux';
 import {
   fetchClubPosts,
@@ -14,22 +14,20 @@ function ClubDetails() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  // Removed: const location = useLocation();
 
   const [likes, setLikes] = useState({});
   const [comments, setComments] = useState({});
-  // Removed: const [successMessage, setSuccessMessage] = useState(null);
 
   const {
     currentClub,
     currentClubPosts,
     isCurrentClubLoading,
-    isLoading, // This isLoading is for clubPosts
-    error // This is the general club error
+    isLoading, 
+    error 
   } = useSelector((state) => state.clubs);
   const { isAuthenticated } = useSelector((state) => state.auth);
 
-  // Log state changes relevant to loading
+
   useEffect(() => {
     console.log("ClubDetails Render - id:", id);
     console.log("ClubDetails Render - currentClub:", currentClub);
@@ -37,8 +35,8 @@ function ClubDetails() {
     console.log("ClubDetails Render - isCurrentClubLoading (for club details):", isCurrentClubLoading);
     console.log("ClubDetails Render - isLoading (for club posts):", isLoading);
     console.log("ClubDetails Render - error:", error);
-    // Removed: console.log("ClubDetails Render - successMessage:", successMessage);
-  }, [id, currentClub, currentClubPosts, isCurrentClubLoading, isLoading, error]); // Removed successMessage dependency
+    
+  }, [id, currentClub, currentClubPosts, isCurrentClubLoading, isLoading, error]); 
 
 
   useEffect(() => {
@@ -54,20 +52,7 @@ function ClubDetails() {
     };
   }, [id, dispatch]);
 
-  // REMOVED: useEffect for handling post creation success message from navigation state
-  // useEffect(() => {
-  //   if (location.state?.postCreatedSuccess) {
-  //     setSuccessMessage(location.state.message);
-  //     navigate(location.pathname, { replace: true, state: {} });
-  //     
-  //     const timer = setTimeout(() => {
-  //       setSuccessMessage(null);
-  //     }, 3000);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [location.state, navigate, location.pathname]);
-
-
+  
   const toggleLike = (postId) => {
     setLikes(prev => ({
       ...prev,
@@ -96,7 +81,7 @@ function ClubDetails() {
     }
   };
 
-  // Centralized loading/error handling for the entire page
+  
   if (isCurrentClubLoading) {
     console.log("ClubDetails: Displaying initial club details loading message.");
     return <p className="text-blue-400 text-center mt-8">Loading club details...</p>;
@@ -114,12 +99,10 @@ function ClubDetails() {
 
   return (
     <div className="page-container p-6 bg-gray-900 min-h-screen text-white">
-      {/* REMOVED: Display success message at the top of the page */}
-      {/* {successMessage && (
-        <div className="bg-green-600 text-white p-3 rounded-lg text-center mb-4">
-          {successMessage}
-        </div>
-      )} */}
+      {}
+      {
+        
+      }
 
       <div className="flex justify-between items-center mb-4">
         <div>
