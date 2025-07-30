@@ -21,7 +21,6 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
     username: user?.username || '',
     email: user?.email || '',
     password: '',
-    // BIO FIELD REMOVED FROM HERE as per your instruction
   });
 
   useEffect(() => {
@@ -41,7 +40,6 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
     const dataToSave = {
       username: formData.username,
       email: formData.email,
-      // BIO FIELD REMOVED FROM DATA TO SAVE as per your instruction
     };
     if (formData.password) {
       dataToSave.password = formData.password;
@@ -79,7 +77,6 @@ const EditProfileModal = ({ user, onClose, onSave, isLoading, error }) => {
               required
             />
           </div>
-          {/* This is where the bio field was. It's now removed. */}
           <div className="mb-6">
             <label htmlFor="password" className="block text-gray-300 text-sm font-semibold mb-2">New Password (optional):</label>
             <input
@@ -131,7 +128,7 @@ const Dashboard = () => {
   const {
     user,
     isAuthenticated,
-    isLoading: authLoading,
+    isLoading: authLoading, // Global auth loading
     error: authError,
     following,
     isFollowingLoading,
@@ -141,112 +138,90 @@ const Dashboard = () => {
     followersError,
     userPosts,
     isUserPostsLoading,
-    hasFetchedUserPosts,
+    hasFetchedUserPosts, // Indicates if fetchUserPosts has completed at least once
+    hasFetchedFollowing, // From authSlice
+    hasFetchedFollowers, // From authSlice
   } = useSelector((state) => state.auth);
-  const { myClubs, isMyClubsLoading, error: clubsError } = useSelector((state) => state.clubs);
+
+  const {
+    myClubs,
+    isMyClubsLoading,
+    error: clubsError,
+    hasFetchedMyClubs, // From clubSlice
+  } = useSelector((state) => state.clubs);
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
 
-  // Combined logging useEffect - keep this for debugging
+  // Effect to handle redirection if not authenticated
   useEffect(() => {
-    console.log("Dashboard Render - user state:", user);
-    console.log("Dashboard Render - isAuthenticated:", isAuthenticated);
-    console.log("Dashboard Render - auth isLoading (global):", authLoading);
-    console.log("Dashboard Render - auth error:", authError);
-    console.log("Dashboard Render - myClubs count:", myClubs ? myClubs.length : 0);
-    console.log("Dashboard Render - isMyClubsLoading:", isMyClubsLoading);
-    console.log("Dashboard Render - following count:", following ? following.length : 0);
-    console.log("Dashboard Render - isFollowingLoading:", isFollowingLoading);
-    console.log("Dashboard Render - followingError:", followingError);
-    console.log("Dashboard Render - followers count:", followers ? followers.length : 0);
-    console.log("Dashboard Render - isFollowersLoading:", isFollowersLoading);
-    console.log("Dashboard Render - followersError:", followersError);
-    console.log("Dashboard Render - userPosts count:", userPosts ? userPosts.length : 0);
-    console.log("Dashboard Render - isUserPostsLoading (dedicated):", isUserPostsLoading);
-    console.log("Dashboard Render - hasFetchedUserPosts:", hasFetchedUserPosts);
-    console.log("Dashboard Render - hasLoadedInitialData:", hasLoadedInitialData);
-  }, [user, isAuthenticated, authLoading, authError, myClubs, isMyClubsLoading, following, isFollowingLoading, followingError, followers, isFollowersLoading, followersError, userPosts, isUserPostsLoading, hasFetchedUserPosts, hasLoadedInitialData]);
-
-  // Main effect for fetching user profile, clubs, and following/followers
-  useEffect(() => {
-    console.log("Dashboard useEffect (fetch): Checking conditions for fetching data.");
-    console.log("   isAuthenticated:", isAuthenticated);
-    console.log("   user?.id:", user?.id);
-    console.log("   hasLoadedInitialData:", hasLoadedInitialData);
-
-    if (isAuthenticated && user?.id && !hasLoadedInitialData) {
-        let shouldFetchUserProfile = !user.username || !user.email; // Check if user data is fully populated
-        let shouldFetchMyClubs = !isMyClubsLoading && (!myClubs || myClubs.length === 0);
-        let shouldFetchFollowing = !isFollowingLoading && (!following || following.length === 0);
-        let shouldFetchFollowers = !isFollowersLoading && (!followers || followers.length === 0);
-        let shouldFetchUserPosts = !isUserPostsLoading && !hasFetchedUserPosts;
-
-        console.log(`   Should fetch user profile: ${shouldFetchUserProfile}`);
-        console.log(`   Should fetch my clubs: ${shouldFetchMyClubs}`);
-        console.log(`   Should fetch following: ${shouldFetchFollowing}`);
-        console.log(`   Should fetch followers: ${shouldFetchFollowers}`);
-        console.log(`   Should fetch user posts: ${shouldFetchUserPosts}`);
-
-        if (shouldFetchUserProfile) {
-            console.log("Dashboard useEffect: Dispatching fetchUserProfile.");
-            dispatch(fetchUserProfile(user.id));
-        }
-        if (shouldFetchMyClubs) {
-            console.log("Dashboard useEffect: Dispatching fetchMyClubs.");
-            dispatch(fetchMyClubs());
-        }
-        if (shouldFetchFollowing) {
-            console.log("Dashboard useEffect: Dispatching fetchFollowing.");
-            dispatch(fetchFollowing(user.id));
-        }
-        if (shouldFetchFollowers) {
-            console.log("Dashboard useEffect: Dispatching fetchFollowers.");
-            dispatch(fetchFollowers(user.id));
-        }
-        if (shouldFetchUserPosts) {
-            console.log("Dashboard useEffect: Dispatching fetchUserPosts.");
-            dispatch(fetchUserPosts(user.id));
-        }
-
-        // Set hasLoadedInitialData to true only when ALL conditions for fetching are false
-        // Meaning, data is either already there OR a fetch has been dispatched for it.
-        if (!shouldFetchUserProfile && !shouldFetchMyClubs && !shouldFetchFollowing && !shouldFetchFollowers && !shouldFetchUserPosts) {
-            setHasLoadedInitialData(true);
-            console.log("Dashboard useEffect: All initial fetches dispatched or already loaded. Setting hasLoadedInitialData to true.");
-        }
-
-    } else if (!isAuthenticated && hasLoadedInitialData) {
-        // If user logs out, reset hasLoadedInitialData so it refetches on next login
-        console.log("Dashboard useEffect: Not authenticated and data was loaded. Resetting hasLoadedInitialData.");
-        setHasLoadedInitialData(false);
-    } else if (!isAuthenticated && !authLoading) {
-        console.log("Dashboard useEffect: Not authenticated and not loading. Redirecting to login.");
-        navigate('/login');
-    } else if (isAuthenticated && user?.id && hasLoadedInitialData) {
-        console.log("Dashboard useEffect: Authenticated, user ID present, and initial data already loaded. No re-fetch.");
+    if (!isAuthenticated && !authLoading) {
+      console.log("Dashboard useEffect: Not authenticated and not loading. Redirecting to login.");
+      navigate('/login');
     }
+  }, [isAuthenticated, authLoading, navigate]);
 
+  // Effect for fetching user-specific data
+  useEffect(() => {
+    console.log("--- Dashboard User Data Fetch Effect Triggered ---");
+    console.log("isAuthenticated:", isAuthenticated);
+    console.log("user?.id:", user?.id);
+    console.log("authLoading (global):", authLoading);
+    console.log("isFollowingLoading:", isFollowingLoading);
+    console.log("isFollowersLoading:", isFollowersLoading);
+    console.log("isUserPostsLoading:", isUserPostsLoading);
+    console.log("isMyClubsLoading:", isMyClubsLoading);
+    console.log("hasFetchedUserPosts (from slice):", hasFetchedUserPosts);
+    console.log("hasFetchedFollowing (from slice):", hasFetchedFollowing);
+    console.log("hasFetchedFollowers (from slice):", hasFetchedFollowers);
+    console.log("hasFetchedMyClubs (from slice):", hasFetchedMyClubs);
+    console.log("--------------------------------------------");
+
+    if (isAuthenticated && user?.id) {
+      const currentUserId = user.id;
+
+      // Fetch User Profile (if user object is not fully populated or explicitly needed)
+      if (!user.username || !user.email) {
+        console.log("Dashboard useEffect: Dispatching fetchUserProfile (missing basic data).");
+        dispatch(fetchUserProfile(currentUserId));
+      }
+
+      // Fetch My Clubs - only if not loading AND not yet fetched
+      if (!isMyClubsLoading && !hasFetchedMyClubs) {
+        console.log("Dashboard useEffect: Dispatching fetchMyClubs.");
+        dispatch(fetchMyClubs());
+      }
+      
+      // Fetch Following - only if not loading AND not yet fetched
+      if (!isFollowingLoading && !hasFetchedFollowing) {
+        console.log("Dashboard useEffect: Dispatching fetchFollowing.");
+        dispatch(fetchFollowing(currentUserId));
+      }
+      
+      // Fetch Followers - only if not loading AND not yet fetched
+      if (!isFollowersLoading && !hasFetchedFollowers) {
+        console.log("Dashboard useEffect: Dispatching fetchFollowers.");
+        dispatch(fetchFollowers(currentUserId));
+      }
+      
+      // Fetch User Posts - only if not loading AND not yet fetched
+      if (!isUserPostsLoading && !hasFetchedUserPosts) {
+        console.log(`Dashboard useEffect: Dispatching fetchUserPosts for user ${currentUserId}`);
+        dispatch(fetchUserPosts(currentUserId));
+      }
+    }
   }, [
     isAuthenticated,
     user?.id,
     user?.username,
     user?.email,
-    user?.bio, // Keep this here for the display of bio on the dashboard
     dispatch,
-    isMyClubsLoading,
-    myClubs,
-    isFollowingLoading,
-    following,
-    isFollowersLoading,
-    followers,
-    userPosts,
-    isUserPostsLoading,
-    hasFetchedUserPosts,
-    hasLoadedInitialData,
-    authLoading,
-    navigate
+    myClubs, isMyClubsLoading, hasFetchedMyClubs,
+    following, isFollowingLoading, hasFetchedFollowing,
+    followers, isFollowersLoading, hasFetchedFollowers,
+    userPosts, isUserPostsLoading, hasFetchedUserPosts,
+    authLoading
   ]);
+
 
   const handleSaveProfile = async (updatedData) => {
     if (!user || !user.id) {
@@ -255,12 +230,10 @@ const Dashboard = () => {
     }
     console.log("handleSaveProfile: Data being sent to updateUserProfile:", updatedData);
     try {
-      const resultAction = await dispatch(updateUserProfile({ userId: user.id, userData: updatedData })).unwrap();
-      console.log("Profile update successful:", resultAction);
+      await dispatch(updateUserProfile({ userId: user.id, userData: updatedData })).unwrap();
+      console.log("Profile update successful.");
       setShowEditModal(false);
-      // After updating profile, force a re-fetch of user profile data
-      // This will trigger the useEffect to re-evaluate and fetch if needed
-      setHasLoadedInitialData(false); // Reset this to trigger full re-evaluation
+      dispatch(fetchUserProfile(user.id)); // Re-fetch to ensure UI is updated
     } catch (err) {
       console.error("Failed to update profile:", err);
     }
@@ -271,43 +244,61 @@ const Dashboard = () => {
     dispatch(clearError());
   };
 
-  const handleUnfollowFromDashboard = (userId) => {
-    console.log(`Dashboard: Attempting to unfollow user with ID: ${userId}`);
-    dispatch(unfollowUser(userId));
-    // After unfollow, force a re-fetch of following/followers data
-    setHasLoadedInitialData(false); // Reset this to trigger full re-evaluation
+  const handleUnfollowFromDashboard = async (userIdToUnfollow) => {
+    console.log(`Dashboard: Attempting to unfollow user with ID: ${userIdToUnfollow}`);
+    try {
+      await dispatch(unfollowUser(userIdToUnfollow)).unwrap();
+      console.log(`Successfully unfollowed user ${userIdToUnfollow}`);
+      // Re-fetch to update lists immediately and ensure consistency
+      if (user?.id) {
+        dispatch(fetchFollowing(user.id));
+        dispatch(fetchFollowers(user.id));
+      }
+    } catch (error) {
+      console.error(`Failed to unfollow: ${error.message || 'An error occurred.'}`);
+      // If the error is "Not currently following", it means our local state was stale.
+      // We can force a re-fetch to synchronize.
+      if (error.message && error.message.includes("Not currently following")) {
+        console.log("Dashboard: Unfollow error due to stale state, re-fetching lists.");
+        if (user?.id) {
+          dispatch(fetchFollowing(user.id));
+          dispatch(fetchFollowers(user.id));
+        }
+      }
+    }
   };
 
   const handleFollowBack = async (followerId) => {
     if (!isAuthenticated) {
-      console.error("Please log in to follow users."); // Replaced alert
+      console.error("Please log in to follow users.");
       return;
     }
     if (user?.id === followerId) {
-      console.error("You cannot follow yourself."); // Replaced alert
+      console.error("You cannot follow yourself.");
       return;
     }
     console.log(`Dashboard: Attempting to follow back user with ID: ${followerId}`);
     try {
       await dispatch(followUser(followerId)).unwrap();
       console.log(`Successfully followed back user ${followerId}`);
-      // After follow, force a re-fetch of following/followers data
-      setHasLoadedInitialData(false); // Reset this to trigger full re-evaluation
+      // Re-fetch to update lists immediately and ensure consistency
+      if (user?.id) {
+        dispatch(fetchFollowing(user.id));
+        dispatch(fetchFollowers(user.id));
+      }
     } catch (error) {
-      console.error(`Failed to follow back: ${error.message || 'An error occurred.'}`); // Replaced alert
+      console.error(`Failed to follow back: ${error.message || 'An error occurred.'}`);
     }
   };
-
 
   const handleLeaveClubFromDashboard = async (clubId) => {
     console.log(`Dashboard: Attempting to leave club with ID: ${clubId}`);
     try {
       await dispatch(leaveClub(clubId)).unwrap();
       console.log(`Successfully left club ${clubId}`);
-      // After leaving club, force a re-fetch of my clubs
-      setHasLoadedInitialData(false); // Reset this to trigger full re-evaluation
+      dispatch(fetchMyClubs()); // Re-fetch to update list immediately
     } catch (error) {
-      console.error(`Failed to leave club: ${error.message || 'An error occurred.'}`); // Replaced alert
+      console.error(`Failed to leave club: ${error.message || 'An error occurred.'}`);
     }
   };
 
@@ -317,9 +308,20 @@ const Dashboard = () => {
     return dateB - dateA;
   });
 
+  // Moved declaration of isAnyDataLoading before its usage in showLoadingState
+  const isAnyDataLoading = authLoading || isMyClubsLoading || isFollowingLoading || isFollowersLoading || isUserPostsLoading;
+
   // Centralized loading check for the entire dashboard
-  // Only show loading if authenticated, user ID is present, and hasLoadedInitialData is false
-  if (isAuthenticated && user?.id && !hasLoadedInitialData) {
+  const showLoadingState = isAuthenticated && user?.id && (
+    isAnyDataLoading ||
+    (!hasFetchedMyClubs && myClubs.length === 0 && !isMyClubsLoading) ||
+    (!hasFetchedFollowing && following.length === 0 && !isFollowingLoading) ||
+    (!hasFetchedFollowers && followers.length === 0 && !isFollowersLoading) ||
+    (!hasFetchedUserPosts && userPosts.length === 0 && !isUserPostsLoading)
+  );
+
+
+  if (showLoadingState) {
     return (
       <div className="dashboard-loading p-6 bg-gray-900 min-h-screen text-white flex items-center justify-center">
         <p className="text-blue-400 text-xl">Loading dashboard data...</p>
@@ -383,9 +385,9 @@ const Dashboard = () => {
 
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Posts</h2>
-        {isUserPostsLoading && sortedUserPosts.length === 0 ? (
+        {isUserPostsLoading ? ( // Only show loading if it's actually loading
             <p className="text-blue-400 text-center">Loading your posts...</p>
-        ) : sortedUserPosts.length === 0 ? (
+        ) : sortedUserPosts.length === 0 && hasFetchedUserPosts ? ( // Show "no posts" only if fetched and empty
           <p className="text-gray-400">You haven’t created any posts yet.</p>
         ) : (
           <div className="feed-list">
@@ -398,9 +400,9 @@ const Dashboard = () => {
 
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Clubs</h2>
-        {isMyClubsLoading ? (
+        {isMyClubsLoading ? ( // Only show loading if it's actually loading
             <p className="text-blue-400 text-center">Loading your clubs...</p>
-        ) : myClubs && myClubs.length === 0 ? (
+        ) : myClubs && myClubs.length === 0 && hasFetchedMyClubs ? ( // Show "no clubs" only if fetched and empty
           <p className="text-gray-400">You haven't joined any clubs yet.</p>
         ) : (
           <div className="club-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -418,19 +420,22 @@ const Dashboard = () => {
 
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">People I’m Following</h2>
-        {isFollowingLoading ? (
+        {isFollowingLoading ? ( // Only show loading if it's actually loading
             <p className="text-blue-400 text-center">Loading who you follow...</p>
         ) : followingError ? (
             <p className="text-red-500 text-center">Error loading following list: {followingError}</p>
-        ) : following && following.length === 0 ? (
+        ) : following && following.length === 0 && hasFetchedFollowing ? ( // Show "not following" only if fetched and empty
           <p className="text-gray-400">You're not following anyone yet.</p>
         ) : (
           <ul className="feed-list">
             {following && following.map(followedUser => (
               <li key={followedUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
-                <p className="text-white text-lg">@{followedUser.username}</p>
+                <p className="text-white text-lg">@{followedUser.username || 'Unknown'}</p> {/* Ensure username display */}
                 <button
-                  className="leave-btn"
+                  className={`
+                    px-4 py-2 rounded-full font-bold text-sm transition duration-300 ease-in-out
+                    ${'bg-red-600 text-white hover:bg-red-700'}
+                  `}
                   onClick={() => handleUnfollowFromDashboard(followedUser.id)}
                 >
                   Unfollow
@@ -443,11 +448,11 @@ const Dashboard = () => {
 
       <div className="section bg-gray-800 rounded-lg p-6 shadow-lg mb-8">
         <h2 className="section-title text-xl font-semibold mb-4 text-orange-400">My Followers</h2>
-        {isFollowersLoading ? (
+        {isFollowersLoading ? ( // Only show loading if it's actually loading
             <p className="text-blue-400 text-center">Loading your followers...</p>
         ) : followersError ? (
             <p className="text-red-500 text-center">Error loading followers list: {followersError}</p>
-        ) : followers && followers.length === 0 ? (
+        ) : followers && followers.length === 0 && hasFetchedFollowers ? ( // Show "no followers" only if fetched and empty
           <p className="text-gray-400">You don't have any followers yet.</p>
         ) : (
           <ul className="feed-list">
@@ -455,21 +460,20 @@ const Dashboard = () => {
               const isAlreadyFollowingBack = following && following.some(f => f.id === followerUser.id);
               return (
                 <li key={followerUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
-                  <p className="text-white text-lg">@{followerUser.username}</p>
-                  {isAuthenticated && !isAlreadyFollowingBack && user?.id !== followerUser.id && (
+                  <p className="text-white text-lg">@{followerUser.username || 'Unknown'}</p> {/* Ensure username display */}
+                  {isAuthenticated && user?.id !== followerUser.id && (
                     <button
-                      className="post-btn"
-                      onClick={() => handleFollowBack(followerUser.id)}
+                      className={`
+                        px-4 py-2 rounded-full font-bold text-sm transition duration-300 ease-in-out
+                        ${isAlreadyFollowingBack ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'}
+                      `}
+                      onClick={() =>
+                        isAlreadyFollowingBack
+                          ? handleUnfollowFromDashboard(followerUser.id)
+                          : handleFollowBack(followerUser.id)
+                      }
                     >
-                      Follow Back
-                    </button>
-                  )}
-                  {isAuthenticated && isAlreadyFollowingBack && user?.id !== followerUser.id && (
-                    <button
-                      className="leave-btn"
-                      onClick={() => handleUnfollowFromDashboard(followerUser.id)}
-                    >
-                      Unfollow
+                      {isAlreadyFollowingBack ? 'Unfollow' : 'Follow Back'}
                     </button>
                   )}
                 </li>

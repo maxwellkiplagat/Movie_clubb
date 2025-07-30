@@ -3,8 +3,9 @@ from flask import request, make_response, jsonify, url_for
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 import secrets
+import os # NEW: Import os for environment variables
 from flask_mail import Message # Import Message for email content
-from .. import db, bcrypt, mail # NEW: Import mail object
+from .. import db, bcrypt, mail # Corrected: Import db, bcrypt, mail objects from app/__init__.py
 
 from ..models.user import User
 
@@ -21,11 +22,11 @@ class UserRegistration(Resource):
 
         #basic validation
         if not username or not email or not password:
-            return {'message': 'Username, email, and password are required'}, 400 # Bad Request
+            return {'message': 'Username, email, and password are required'}, 400 
         
         # Check if user already exists
         if User.query.filter_by(username=username).first():
-            return {'message': 'Username already exists'}, 409 # Conflict
+            return {'message': 'Username already exists'}, 409
         if User.query.filter_by(email=email).first():
             return {'message': 'Email already exists'}, 409
         
@@ -44,7 +45,7 @@ class UserRegistration(Resource):
             }), 201) #new user created successfully
         except Exception as e:
             db.session.rollback()
-            return {'message': f'Error registering user: {str(e)}'}, 500 #internal server error
+            return {'message': f'Error registering user: {str(e)}'}, 500 
         
 class UserLogin(Resource):
     """
@@ -162,4 +163,3 @@ class ResetPassword(Resource):
         except Exception as e:
             db.session.rollback()
             return {'message': f'Error resetting password: {str(e)}'}, 500
-

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import axios from 'axios';
-import Login from '../../components/Login'; // Assuming signup is in Login component
+import Login from '../../components/Login'; 
 
 jest.mock('axios');
 

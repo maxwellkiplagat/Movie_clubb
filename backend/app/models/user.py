@@ -2,24 +2,27 @@ from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.ext.hybrid import hybrid_property
 from datetime import datetime, timedelta
 
-from .. import db, bcrypt # Assuming db and bcrypt are initialized in app.py or __init__.py
+from .. import db, bcrypt
+from .__init__ import BaseModelMixin # Ensure BaseModelMixin is imported
 
-class User(db.Model, SerializerMixin):
+# FIX: Changed inheritance to only include BaseModelMixin (which already has db.Model) and SerializerMixin
+class User(BaseModelMixin, SerializerMixin):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    # id, created_at, updated_at are now inherited from BaseModelMixin
+    # id = db.Column(db.Integer, primary_key=True) # REMOVED: Inherited from BaseModelMixin
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    _password_hash = db.Column(db.String(128), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    _password_hash = db.Column(db.String, nullable=False)
+    bio = db.Column(db.Text, nullable=True)
+    # created_at = db.Column(db.DateTime, default=datetime.utcnow) # REMOVED: Inherited from BaseModelMixin
+    # updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) # REMOVED: Inherited from BaseModelMixin
 
     # New fields for password reset functionality
     reset_token = db.Column(db.String(128), unique=True, nullable=True)
     reset_token_expires_at = db.Column(db.DateTime, nullable=True)
 
     # Relationships
-    # FIX: Changed backref='user' to back_populates='author' to match Post model's 'author' relationship
     posts = db.relationship('Post', back_populates='author', lazy=True, cascade='all, delete-orphan')
     likes = db.relationship('Like', back_populates='user', lazy=True, cascade='all, delete-orphan')
     comments = db.relationship('Comment', back_populates='user', lazy=True, cascade='all, delete-orphan')
@@ -44,12 +47,11 @@ class User(db.Model, SerializerMixin):
     reviews = db.relationship('Review', back_populates='user', lazy=True, cascade='all, delete-orphan')
 
     # Serialization rules (simplified to avoid recursion with SerializerMixin)
-    # Only include direct attributes. All relationships must be fetched via separate API calls.
     serialize_rules = (
         '-_password_hash', 'created_at', 'updated_at',
         '-reset_token', '-reset_token_expires_at', 
-        
-        # Explicitly exclude ALL relationships to prevent ANY recursion or unexpected serialization issues.
+        'bio',
+
         '-posts',
         '-likes',
         '-comments',
@@ -90,4 +92,3 @@ class User(db.Model, SerializerMixin):
         if user and user.reset_token_expires_at and user.reset_token_expires_at > datetime.utcnow():
             return user
         return None
-

@@ -30,7 +30,7 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
         '-updated_at',
         '-author',   # Exclude the 'author' relationship
         '-club',     # Exclude the 'club' relationship
-        '-likes',    # Exclude the 'likes' relationship
+        '-likes',    # Exclude the 'likes' relationship (we'll handle it manually in to_dict)
         '-comments', # Exclude the 'comments' relationship
     )
 
@@ -46,7 +46,6 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
         
-        # Add author_username AND author_id directly
         if self.author:
             data['author_username'] = self.author.username
             data['author_id'] = self.author.id
@@ -57,8 +56,14 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
         # Include likes count
         data['likes_count'] = len(self.likes)
 
+        # NEW: Include the list of likes with user_id and username
+        data['likes'] = [
+            {'user_id': like.user_id, 'username': like.user.username if like.user else 'Unknown'}
+            for like in self.likes
+        ]
+
         # Prepare comments to be included in the post dict (using Comment's to_dict)
-        comments_data = [comment.to_dict() for comment in self.comments] # Use comment.to_dict()
+        comments_data = [comment.to_dict() for comment in self.comments]
         data['comments'] = comments_data
 
         return data
