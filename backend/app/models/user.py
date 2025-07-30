@@ -19,42 +19,45 @@ class User(db.Model, SerializerMixin):
     reset_token_expires_at = db.Column(db.DateTime, nullable=True)
 
     # Relationships
-    posts = db.relationship('Post', backref='user', lazy=True, cascade='all, delete-orphan')
+    # FIX: Changed backref='user' to back_populates='author' to match Post model's 'author' relationship
+    posts = db.relationship('Post', back_populates='author', lazy=True, cascade='all, delete-orphan')
     likes = db.relationship('Like', back_populates='user', lazy=True, cascade='all, delete-orphan')
     comments = db.relationship('Comment', back_populates='user', lazy=True, cascade='all, delete-orphan')
     club_memberships = db.relationship('ClubMember', back_populates='user', lazy=True, cascade='all, delete-orphan')
     
     following = db.relationship(
         'Follow',
-        foreign_keys='Follow.follower_id',
+        primaryjoin="User.id == Follow.follower_id",
         back_populates='follower',
         lazy='dynamic',
         cascade='all, delete-orphan'
     )
     followers = db.relationship(
         'Follow',
-        foreign_keys='Follow.followed_id',
+        primaryjoin="User.id == Follow.followed_id",
         back_populates='followed',
         lazy='dynamic',
         cascade='all, delete-orphan'
     )
     watchlists = db.relationship('Watchlist', back_populates='user', lazy=True, cascade='all, delete-orphan')
+    
+    reviews = db.relationship('Review', back_populates='user', lazy=True, cascade='all, delete-orphan')
 
-    # REMOVED: clubs_created relationship
-    # clubs_created = db.relationship('Club', back_populates='creator', lazy=True, cascade='all, delete-orphan')
-
-    # Serialization rules to prevent sensitive data exposure
+    # Serialization rules (simplified to avoid recursion with SerializerMixin)
+    # Only include direct attributes. All relationships must be fetched via separate API calls.
     serialize_rules = (
         '-_password_hash', 'created_at', 'updated_at',
-        '-reset_token', '-reset_token_expires_at', # Do not serialize these
-        'posts.user', # Avoid circular reference
-        'likes.user',
-        'comments.user',
-        'club_memberships.user',
-        'following.follower',
-        'followers.followed',
-        'watchlists.user',
-        # REMOVED: 'clubs_created.creator', # No longer serialize this
+        '-reset_token', '-reset_token_expires_at', 
+        
+        # Explicitly exclude ALL relationships to prevent ANY recursion or unexpected serialization issues.
+        '-posts',
+        '-likes',
+        '-comments',
+        '-club_memberships',
+        '-following', 
+        '-followers', 
+        '-watchlists',
+        '-reviews',
     )
 
     def __repr__(self):

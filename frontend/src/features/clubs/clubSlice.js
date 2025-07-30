@@ -51,7 +51,7 @@ export const fetchMyClubs = createAsyncThunk(
 
 export const joinClub = createAsyncThunk(
   'clubs/joinClub',
-  async (clubId, { rejectWithValue, getState }) => {
+  async (clubId, { rejectWithValue, getState, dispatch }) => { // Added dispatch here
     try {
       const token = getState().auth.token;
       if (!token) return rejectWithValue('Authentication required to join a club.');
@@ -66,8 +66,13 @@ export const joinClub = createAsyncThunk(
       });
       const data = await response.json();
       if (!response.ok) return rejectWithValue(data.message || 'Failed to join club');
-      return data;
+      
+      // FIX: After successfully joining, fetch the full club details
+      // This ensures the Redux state gets a complete club object with all properties
+      const fullClubDetails = await dispatch(fetchClubDetails(clubId)).unwrap();
+      return fullClubDetails; // Return the full club object for the reducer
     } catch (error) {
+      // If fetchClubDetails fails, this catch block will also handle it
       return rejectWithValue(error.message || 'Network error joining club');
     }
   }
@@ -299,9 +304,10 @@ export const deleteComment = createAsyncThunk(
 
 
 // Helper function to update a post within an array (used for feedPosts and currentClubPosts)
-const updatePostInArray = (postsArray, postId, updateFn) => {
+// FIX: updateSinglePost now takes getState as an argument
+const updatePostInArray = (postsArray, postId, updateFn, getState) => {
   return postsArray.map(post =>
-    post.id === postId ? { ...post, ...updateFn(post) } : post
+    post.id === postId ? { ...post, ...updateFn(post, getState) } : post // Pass getState to updateFn
   );
 };
 
@@ -400,14 +406,14 @@ const clubSlice = createSlice({
       })
       .addCase(joinClub.fulfilled, (state, action) => {
         state.isLoading = false;
-        // When joining a club, add it to myClubs if it's not already there
+        // action.payload is now the full club object from fetchClubDetails
         const joinedClub = action.payload;
         if (!state.myClubs.some(club => club.id === joinedClub.id)) {
           state.myClubs.push(joinedClub);
         }
-        // Optionally update allClubs if needed
+        // Update allClubs if needed (ensure it has the full details too)
         state.allClubs = state.allClubs.map(club =>
-          club.id === joinedClub.id ? { ...club, is_joined: true } : club
+          club.id === joinedClub.id ? joinedClub : club // Replace with full object
         );
       })
       .addCase(joinClub.rejected, (state, action) => {
@@ -507,30 +513,26 @@ const clubSlice = createSlice({
       .addCase(toggleLike.fulfilled, (state, action) => {
         const { postId, likes_count, liked, currentUserId } = action.payload;
         
-        // Helper to update a single post within an array
-        const updateSinglePost = (post) => {
+        // FIX: Pass getState to updateSinglePost
+        const updateSinglePost = (post, getState) => { // Now accepts getState
           let updatedLikes = post.likes ? [...post.likes] : [];
           if (liked) {
-            // Add the current user's like if not already present
             if (!updatedLikes.some(like => like.user_id === currentUserId)) {
-              // We need the username of the current user to add to the likes array.
-              // It's best to get this from the auth slice or pass it from the component.
-              // For now, we'll assume it's available in auth.user.username.
-              const currentUserUsername = state.auth ? state.auth.user?.username : 'Unknown'; // Fallback
+              const currentUserUsername = getState().auth?.user?.username || 'Unknown';
               updatedLikes.push({ user_id: currentUserId, username: currentUserUsername });
             }
           } else {
-            // Remove the current user's like
             updatedLikes = updatedLikes.filter(like => like.user_id !== currentUserId);
           }
           return {
             likes_count: likes_count,
-            likes: updatedLikes // Update the actual likes array
+            likes: updatedLikes
           };
         };
 
-        state.feedPosts = updatePostInArray(state.feedPosts, postId, updateSinglePost);
-        state.currentClubPosts = updatePostInArray(state.currentClubPosts, postId, updateSinglePost);
+        // FIX: Pass getState as the fourth argument to updatePostInArray
+        state.feedPosts = updatePostInArray(state.feedPosts, postId, updateSinglePost, (state) => state); // Pass a function that returns the current state
+        state.currentClubPosts = updatePostInArray(state.currentClubPosts, postId, updateSinglePost, (state) => state); // Pass a function that returns the current state
       })
       // NEW: Reducers for addComment
       .addCase(addComment.fulfilled, (state, action) => {

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, clearError } from '../auth/authSlice';
-import { useNavigate, Link } from 'react-router-dom'; // Import Link
+import { useNavigate, Link } from 'react-router-dom';
 
 function Login() {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(''); // FIX: Corrected typo from setSassword to setPassword
   const dispatch = useDispatch();
   const { isLoading, error, isAuthenticated } = useSelector((state) => state.auth);
   const navigate = useNavigate();
@@ -24,8 +24,17 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dispatch loginUser thunk
-    await dispatch(loginUser({ username, password }));
+    dispatch(clearError()); // Clear previous errors before a new attempt
+    try {
+      // Dispatch loginUser thunk
+      await dispatch(loginUser({ username, password })).unwrap(); // Use .unwrap() to catch rejected promises
+    } catch (err) {
+      // Error handled by Redux slice, but we can log or add specific UI feedback here if needed
+      console.error("Login failed:", err);
+    } finally {
+      // Always clear the password field after an attempt for security
+      setPassword(''); 
+    }
   };
 
   return (
@@ -74,7 +83,7 @@ function Login() {
         </form>
 
         <div className="mt-4 text-center text-sm">
-          <Link to="/forgot-password" className="text-blue-400 hover:underline"> {/* Ensure this link is correct */}
+          <Link to="/forgot-password" className="text-blue-400 hover:underline">
             Forgot Password?
           </Link>
         </div>

@@ -12,31 +12,18 @@ class ClubMember(BaseModelMixin, SerializerMixin, db.Model):
     # Ensure a user can only be a member of a club once
     __table_args__ = (db.UniqueConstraint('user_id', 'club_id', name='_user_club_uc'),)
 
-    # Relationships - CORRECTED AND ADDED
+    # Relationships
     user = db.relationship('User', back_populates='club_memberships', foreign_keys=[user_id])
     club = db.relationship('Club', back_populates='members', foreign_keys=[club_id]) 
 
-    # Serialization rules - REFINED
+    # FIX: Drastically simplify serialize_rules to prevent ALL recursion.
+    # Only include direct attributes. Frontend should fetch user/club details separately.
     serialize_rules = (
         '-created_at',
         '-updated_at',
-        '-user.club_memberships', 
-        '-club.members',          
-        '-user.clubs_created',    
-        '-user.posts',            
-        '-user.reviews',          
-        '-user.watchlist_entries',
-        '-user.following',        
-        '-user.followers',        
-        '-club.posts',            
-        '-club.creator',          
-        '-club.members',
-        'user.id', 
-        'user.username',
-        'club.id', 
-        'club.name',
-        'club.description',
-        'club.genre',
+        # Explicitly exclude ALL relationships to prevent ANY recursion or unexpected serialization issues.
+        '-user', # Exclude the user object
+        '-club', # Exclude the club object
     )
 
     def __repr__(self):

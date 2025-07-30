@@ -176,7 +176,7 @@ const Dashboard = () => {
     console.log("   hasLoadedInitialData:", hasLoadedInitialData);
 
     if (isAuthenticated && user?.id && !hasLoadedInitialData) {
-        let shouldFetchUserProfile = !user.username || !user.email;
+        let shouldFetchUserProfile = !user.username || !user.email; // Check if user data is fully populated
         let shouldFetchMyClubs = !isMyClubsLoading && (!myClubs || myClubs.length === 0);
         let shouldFetchFollowing = !isFollowingLoading && (!following || following.length === 0);
         let shouldFetchFollowers = !isFollowersLoading && (!followers || followers.length === 0);
@@ -209,12 +209,15 @@ const Dashboard = () => {
             dispatch(fetchUserPosts(user.id));
         }
 
+        // Set hasLoadedInitialData to true only when ALL conditions for fetching are false
+        // Meaning, data is either already there OR a fetch has been dispatched for it.
         if (!shouldFetchUserProfile && !shouldFetchMyClubs && !shouldFetchFollowing && !shouldFetchFollowers && !shouldFetchUserPosts) {
             setHasLoadedInitialData(true);
             console.log("Dashboard useEffect: All initial fetches dispatched or already loaded. Setting hasLoadedInitialData to true.");
         }
 
     } else if (!isAuthenticated && hasLoadedInitialData) {
+        // If user logs out, reset hasLoadedInitialData so it refetches on next login
         console.log("Dashboard useEffect: Not authenticated and data was loaded. Resetting hasLoadedInitialData.");
         setHasLoadedInitialData(false);
     } else if (!isAuthenticated && !authLoading) {
@@ -255,6 +258,9 @@ const Dashboard = () => {
       const resultAction = await dispatch(updateUserProfile({ userId: user.id, userData: updatedData })).unwrap();
       console.log("Profile update successful:", resultAction);
       setShowEditModal(false);
+      // After updating profile, force a re-fetch of user profile data
+      // This will trigger the useEffect to re-evaluate and fetch if needed
+      setHasLoadedInitialData(false); // Reset this to trigger full re-evaluation
     } catch (err) {
       console.error("Failed to update profile:", err);
     }
@@ -268,27 +274,27 @@ const Dashboard = () => {
   const handleUnfollowFromDashboard = (userId) => {
     console.log(`Dashboard: Attempting to unfollow user with ID: ${userId}`);
     dispatch(unfollowUser(userId));
+    // After unfollow, force a re-fetch of following/followers data
+    setHasLoadedInitialData(false); // Reset this to trigger full re-evaluation
   };
 
   const handleFollowBack = async (followerId) => {
     if (!isAuthenticated) {
-      alert("Please log in to follow users.");
+      console.error("Please log in to follow users."); // Replaced alert
       return;
     }
     if (user?.id === followerId) {
-      alert("You cannot follow yourself.");
+      console.error("You cannot follow yourself."); // Replaced alert
       return;
     }
     console.log(`Dashboard: Attempting to follow back user with ID: ${followerId}`);
     try {
       await dispatch(followUser(followerId)).unwrap();
       console.log(`Successfully followed back user ${followerId}`);
-      if (user?.id) {
-        dispatch(fetchFollowing(user.id));
-      }
+      // After follow, force a re-fetch of following/followers data
+      setHasLoadedInitialData(false); // Reset this to trigger full re-evaluation
     } catch (error) {
-      console.error("Failed to follow back:", error);
-      alert(`Failed to follow back: ${error.message || 'An error occurred.'}`);
+      console.error(`Failed to follow back: ${error.message || 'An error occurred.'}`); // Replaced alert
     }
   };
 
@@ -298,9 +304,10 @@ const Dashboard = () => {
     try {
       await dispatch(leaveClub(clubId)).unwrap();
       console.log(`Successfully left club ${clubId}`);
+      // After leaving club, force a re-fetch of my clubs
+      setHasLoadedInitialData(false); // Reset this to trigger full re-evaluation
     } catch (error) {
-      console.error("Failed to leave club from dashboard:", error);
-      alert(`Failed to leave club: ${error.message || 'An error occurred.'}`);
+      console.error(`Failed to leave club: ${error.message || 'An error occurred.'}`); // Replaced alert
     }
   };
 
@@ -310,14 +317,17 @@ const Dashboard = () => {
     return dateB - dateA;
   });
 
-  if (!user?.id && authLoading) {
+  // Centralized loading check for the entire dashboard
+  // Only show loading if authenticated, user ID is present, and hasLoadedInitialData is false
+  if (isAuthenticated && user?.id && !hasLoadedInitialData) {
     return (
       <div className="dashboard-loading p-6 bg-gray-900 min-h-screen text-white flex items-center justify-center">
-        <p className="text-blue-400 text-xl">Loading user profile...</p>
+        <p className="text-blue-400 text-xl">Loading dashboard data...</p>
       </div>
     );
   }
 
+  // Centralized error display
   if (authError || clubsError || followingError || followersError) {
     return (
       <div className="dashboard-error p-6 bg-gray-900 min-h-screen text-red-500 text-center">
@@ -329,6 +339,7 @@ const Dashboard = () => {
     );
   }
 
+  // If not authenticated, redirect (handled by useEffect)
   if (!isAuthenticated) {
     return null;
   }
@@ -360,7 +371,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {showEditModal && (
+      {showEditModal && user && (
         <EditProfileModal
           user={user}
           onClose={handleCloseModal}
@@ -411,11 +422,11 @@ const Dashboard = () => {
             <p className="text-blue-400 text-center">Loading who you follow...</p>
         ) : followingError ? (
             <p className="text-red-500 text-center">Error loading following list: {followingError}</p>
-        ) : following.length === 0 ? (
+        ) : following && following.length === 0 ? (
           <p className="text-gray-400">You're not following anyone yet.</p>
         ) : (
           <ul className="feed-list">
-            {following.map(followedUser => (
+            {following && following.map(followedUser => (
               <li key={followedUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
                 <p className="text-white text-lg">@{followedUser.username}</p>
                 <button
@@ -436,12 +447,12 @@ const Dashboard = () => {
             <p className="text-blue-400 text-center">Loading your followers...</p>
         ) : followersError ? (
             <p className="text-red-500 text-center">Error loading followers list: {followersError}</p>
-        ) : followers.length === 0 ? (
+        ) : followers && followers.length === 0 ? (
           <p className="text-gray-400">You don't have any followers yet.</p>
         ) : (
           <ul className="feed-list">
-            {followers.map(followerUser => {
-              const isAlreadyFollowingBack = following.some(f => f.id === followerUser.id);
+            {followers && followers.map(followerUser => {
+              const isAlreadyFollowingBack = following && following.some(f => f.id === followerUser.id);
               return (
                 <li key={followerUser.id} className="post-card bg-gray-700 rounded-lg p-4 shadow-md flex justify-between items-center mb-4">
                   <p className="text-white text-lg">@{followerUser.username}</p>
