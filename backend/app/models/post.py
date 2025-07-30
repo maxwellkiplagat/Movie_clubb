@@ -19,13 +19,12 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
     author = db.relationship('User', back_populates='posts', foreign_keys=[user_id])
     club = db.relationship('Club', back_populates='posts')
 
-    # NEW: Relationships for Likes and Comments
-    # 'post' here refers to the back_populates name defined in the Like and Comment models.
+
     likes = db.relationship('Like', back_populates='post', lazy=True, cascade="all, delete-orphan")
     comments = db.relationship('Comment', back_populates='post', lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
-        # Manually construct the dictionary to avoid recursion
+        
         data = {
             'id': self.id,
             'movie_title': self.movie_title,
@@ -36,7 +35,7 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
         
-        # Add author_username AND author_id directly
+        
         if self.author:
             data['author_username'] = self.author.username
             data['author_id'] = self.author.id
@@ -44,14 +43,14 @@ class Post(BaseModelMixin, SerializerMixin, db.Model):
             data['author_username'] = 'Unknown'
             data['author_id'] = None
 
-        # NEW: Include likes count
+        
         data['likes_count'] = len(self.likes)
 
-        # NEW: Prepare comments to be included in the post dict
+        
         comments_data = [{
             'id': comment.id,
             'user_id': comment.user_id,
-            'username': comment.user.username if comment.user else 'Unknown', # Access username via backref from Comment model
+            'username': comment.user.username if comment.user else 'Unknown', 
             'content': comment.content,
             'created_at': comment.created_at.isoformat()
         } for comment in self.comments]

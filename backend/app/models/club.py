@@ -42,7 +42,7 @@ class Club(BaseModelMixin, SerializerMixin, db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'created_by_user_id': self.created_by_user_id,
             'creator_username': self.creator.username if self.creator else None,
-            'member_count': len(self.members) # Include member count
+            'member_count': len(self.members) 
         }
         return data
 

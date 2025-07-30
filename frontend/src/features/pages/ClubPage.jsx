@@ -17,9 +17,9 @@ const ClubPage = () => {
   const { isAuthenticated, user, isLoading: authLoading } = useSelector((state) => state.auth);
   const { allClubs, myClubs, isAllClubsLoading, isMyClubsLoading, error } = useSelector((state) => state.clubs);
 
-  const [message, setMessage] = useState(null);
-  const [hasFetchedMyClubs, setHasFetchedMyClubs] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(''); // ✅ Added search state
+ const [hasFetchedMyClubs, setHasFetchedMyClubs] = useState(false);
+ const [message, setMessage] = useState("");
+ const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     dispatch(clearClubError());

@@ -11,7 +11,7 @@ def seed_data():
         # db.session.commit()
         # print("Cleared existing clubs.")
 
-        # Create a default user if none exists (to assign as club creator)
+        
         default_user = User.query.filter_by(username='admin_seeder').first()
         if not default_user:
             default_user = User(username='admin_seeder', email='seeder@example.com')
