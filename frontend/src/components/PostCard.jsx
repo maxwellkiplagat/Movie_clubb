@@ -42,7 +42,7 @@ const PostCard = ({ post }) => {
         }));
       }
 
-      console.log(Successfully toggled like for post ${post.id});
+      console.log(`Successfully toggled like for post ${post.id}`);
     } catch (error) {
       console.error("Failed to toggle like:", error);
       alert(`Failed to toggle like: ${error.message || 'An error occurred.'}`);
@@ -103,7 +103,7 @@ const PostCard = ({ post }) => {
       try {
         await dispatch(addComment({ postId: post.id, content: newCommentContent.trim() })).unwrap();
         setNewCommentContent('');
-        console.log(Comment added to post ${post.id});
+        console.log(`Comment added to post ${post.id}`);
       } catch (error) {
         console.error("Failed to add comment:", error);
         alert(`Failed to add comment: ${error.message || 'An error occurred.'}`);
