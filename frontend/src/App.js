@@ -8,6 +8,7 @@ import PrivateRoute from './components/PrivateRoute';
 
 import Login from './features/pages/Login';
 import Register from './features/pages/Register';
+import ForgotPassword from './features/pages/ForgotPassword'; // New import
 import Feed from './features/pages/Feed';
 import ClubPage from './features/pages/ClubPage';
 import ClubDetails from './features/pages/ClubDetails';
@@ -41,6 +42,7 @@ function App() {
         <Route path="/" element={<Navigate to="/feed" />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} /> {/* New Route */}
         <Route path="/feed" element={<Feed />} />
         <Route path="/clubs" element={<ClubPage />} />
 

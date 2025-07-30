@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { logout, fetchUserPosts } from '../auth/authSlice'; // Ensure fetchUserPosts is imported
+import { logout, fetchUserPosts } from '../auth/authSlice';
 
 const API_URL = 'http://127.0.0.1:5000';
 
@@ -51,7 +51,7 @@ export const fetchMyClubs = createAsyncThunk(
 
 export const joinClub = createAsyncThunk(
   'clubs/joinClub',
-  async (clubId, { rejectWithValue, getState }) => {
+  async (clubId, { rejectWithValue, getState, dispatch }) => {
     try {
       const token = getState().auth.token;
       if (!token) return rejectWithValue('Authentication required to join a club.');
@@ -66,7 +66,9 @@ export const joinClub = createAsyncThunk(
       });
       const data = await response.json();
       if (!response.ok) return rejectWithValue(data.message || 'Failed to join club');
-      return data;
+      
+      const fullClubDetails = await dispatch(fetchClubDetails(clubId)).unwrap();
+      return fullClubDetails;
     } catch (error) {
       return rejectWithValue(error.message || 'Network error joining club');
     }
@@ -212,13 +214,13 @@ export const fetchFeedPosts = createAsyncThunk(
 );
 
 
-// NEW THUNK: Toggle Like on a Post
+// NEW THUNK: Toggle Like on a Post - Now includes currentUserUsername in payload
 export const toggleLike = createAsyncThunk(
   'clubs/toggleLike',
-  // Pass currentUserId as part of the argument to make it available in the reducer
   async ({ postId, currentUserId }, { rejectWithValue, getState }) => {
     try {
       const token = getState().auth.token;
+      const currentUserUsername = getState().auth.user?.username; // Get username here
       if (!token) return rejectWithValue('Authentication required to like/unlike a post.');
 
       const response = await fetch(`${API_URL}/posts/${postId}/like`, {
@@ -234,8 +236,8 @@ export const toggleLike = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to toggle like');
       }
-      // Return postId, the new likes_count, the 'liked' status, and the currentUserId
-      return { postId, ...data, currentUserId };
+      // Return postId, the new likes_count, the 'liked' status, and the currentUserId, AND the currentUsername
+      return { postId, ...data, currentUserId, currentUserUsername }; // Include username
     } catch (error) {
       return rejectWithValue(error.message || 'Network error toggling like');
     }
@@ -298,12 +300,7 @@ export const deleteComment = createAsyncThunk(
 );
 
 
-// Helper function to update a post within an array (used for feedPosts and currentClubPosts)
-const updatePostInArray = (postsArray, postId, updateFn) => {
-  return postsArray.map(post =>
-    post.id === postId ? { ...post, ...updateFn(post) } : post
-  );
-};
+// REMOVED: updatePostInArray helper function as its logic is now inlined for better immutability.
 
 // Slice
 const clubSlice = createSlice({
@@ -317,7 +314,7 @@ const clubSlice = createSlice({
     isAllClubsLoading: false,
     isMyClubsLoading: false,
     isCurrentClubLoading: false,
-    isLoading: false, // General loading for various operations
+    isLoading: false,
     error: null,
     postCreationStatus: 'idle',
     postCreationError: null,
@@ -325,6 +322,11 @@ const clubSlice = createSlice({
     postDeletionError: null,
     isFeedPostsLoading: false,
     feedPostsError: null,
+    // hasFetched flags for dashboard looping fix
+    hasFetchedAllClubs: false,
+    hasFetchedMyClubs: false,
+    hasFetchedClubPosts: false,
+    hasFetchedFeedPosts: false,
   },
   reducers: {
     clearClubError: (state) => {
@@ -350,6 +352,7 @@ const clubSlice = createSlice({
       state.postDeletionError = null;
     },
     resetClubState: (state) => {
+      // Also reset hasFetched flags on logout/reset
       state.allClubs = [];
       state.myClubs = [];
       state.currentClub = null;
@@ -366,6 +369,10 @@ const clubSlice = createSlice({
       state.postDeletionError = null;
       state.isFeedPostsLoading = false;
       state.feedPostsError = null;
+      state.hasFetchedAllClubs = false;
+      state.hasFetchedMyClubs = false;
+      state.hasFetchedClubPosts = false;
+      state.hasFetchedFeedPosts = false;
     }
   },
   extraReducers: (builder) => {
@@ -377,10 +384,12 @@ const clubSlice = createSlice({
       .addCase(fetchAllClubs.fulfilled, (state, action) => {
         state.isAllClubsLoading = false;
         state.allClubs = action.payload;
+        state.hasFetchedAllClubs = true; // Set flag
       })
       .addCase(fetchAllClubs.rejected, (state, action) => {
         state.isAllClubsLoading = false;
         state.error = action.payload;
+        state.hasFetchedAllClubs = true; // Set flag even on error to prevent re-loop
       })
       .addCase(fetchMyClubs.pending, (state) => {
         state.isMyClubsLoading = true;
@@ -389,10 +398,12 @@ const clubSlice = createSlice({
       .addCase(fetchMyClubs.fulfilled, (state, action) => {
         state.isMyClubsLoading = false;
         state.myClubs = action.payload;
+        state.hasFetchedMyClubs = true; // Set flag
       })
       .addCase(fetchMyClubs.rejected, (state, action) => {
         state.isMyClubsLoading = false;
         state.error = action.payload;
+        state.hasFetchedMyClubs = true; // Set flag even on error
       })
       .addCase(joinClub.pending, (state) => {
         state.isLoading = true;
@@ -400,14 +411,12 @@ const clubSlice = createSlice({
       })
       .addCase(joinClub.fulfilled, (state, action) => {
         state.isLoading = false;
-        // When joining a club, add it to myClubs if it's not already there
         const joinedClub = action.payload;
         if (!state.myClubs.some(club => club.id === joinedClub.id)) {
           state.myClubs.push(joinedClub);
         }
-        // Optionally update allClubs if needed
         state.allClubs = state.allClubs.map(club =>
-          club.id === joinedClub.id ? { ...club, is_joined: true } : club
+          club.id === joinedClub.id ? joinedClub : club
         );
       })
       .addCase(joinClub.rejected, (state, action) => {
@@ -425,7 +434,6 @@ const clubSlice = createSlice({
           state.currentClub = null;
           state.currentClubPosts = [];
         }
-        // Optionally update allClubs if needed
         state.allClubs = state.allClubs.map(club =>
           club.id === action.payload ? { ...club, is_joined: false } : club
         );
@@ -455,10 +463,12 @@ const clubSlice = createSlice({
       .addCase(fetchClubPosts.fulfilled, (state, action) => {
         state.isLoading = false;
         state.currentClubPosts = action.payload;
+        state.hasFetchedClubPosts = true; // Set flag
       })
       .addCase(fetchClubPosts.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+        state.hasFetchedClubPosts = true; // Set flag even on error
       })
       .addCase(createPost.pending, (state) => {
         state.postCreationStatus = 'pending';
@@ -466,9 +476,7 @@ const clubSlice = createSlice({
       })
       .addCase(createPost.fulfilled, (state, action) => {
         state.postCreationStatus = 'succeeded';
-        // Add the new post to the beginning of currentClubPosts and feedPosts
         state.currentClubPosts.unshift(action.payload);
-        // Ensure we don't duplicate if feedPosts already includes it (e.g., if it's the same club)
         if (!state.feedPosts.some(post => post.id === action.payload.id)) {
             state.feedPosts.unshift(action.payload);
         }
@@ -498,58 +506,73 @@ const clubSlice = createSlice({
       .addCase(fetchFeedPosts.fulfilled, (state, action) => {
         state.isFeedPostsLoading = false;
         state.feedPosts = action.payload;
+        state.hasFetchedFeedPosts = true; // Set flag
       })
       .addCase(fetchFeedPosts.rejected, (state, action) => {
         state.isFeedPostsLoading = false;
         state.feedPostsError = action.payload;
+        state.hasFetchedFeedPosts = true; // Set flag even on error
       })
-      // NEW: Reducers for toggleLike
       .addCase(toggleLike.fulfilled, (state, action) => {
-        const { postId, likes_count, liked, currentUserId } = action.payload;
+        const { postId, likes_count, liked, currentUserId, currentUserUsername } = action.payload; // Destructure currentUserUsername from payload
         
-        // Helper to update a single post within an array
-        const updateSinglePost = (post) => {
-          let updatedLikes = post.likes ? [...post.likes] : [];
+        // Helper to update a single post's likes and likes_count immutably
+        const updatePostLikes = (post) => {
+          let updatedLikes = post.likes ? [...post.likes] : []; // Create new array for likes
+
           if (liked) {
-            // Add the current user's like if not already present
+            // Add like if not already present
             if (!updatedLikes.some(like => like.user_id === currentUserId)) {
-              // We need the username of the current user to add to the likes array.
-              // It's best to get this from the auth slice or pass it from the component.
-              // For now, we'll assume it's available in auth.user.username.
-              const currentUserUsername = state.auth ? state.auth.user?.username : 'Unknown'; // Fallback
-              updatedLikes.push({ user_id: currentUserId, username: currentUserUsername });
+              updatedLikes.push({ user_id: currentUserId, username: currentUserUsername || 'Unknown' }); // Use payload username
             }
           } else {
-            // Remove the current user's like
+            // Remove like
             updatedLikes = updatedLikes.filter(like => like.user_id !== currentUserId);
           }
           return {
+            ...post, // Create new post object for immutability
             likes_count: likes_count,
-            likes: updatedLikes // Update the actual likes array
+            likes: updatedLikes // Assign the new likes array
           };
         };
 
-        state.feedPosts = updatePostInArray(state.feedPosts, postId, updateSinglePost);
-        state.currentClubPosts = updatePostInArray(state.currentClubPosts, postId, updateSinglePost);
+        // Update feedPosts immutably
+        state.feedPosts = state.feedPosts.map(post =>
+          post.id === postId ? updatePostLikes(post) : post
+        );
+        // Update currentClubPosts immutably
+        state.currentClubPosts = state.currentClubPosts.map(post =>
+          post.id === postId ? updatePostLikes(post) : post
+        );
       })
-      // NEW: Reducers for addComment
       .addCase(addComment.fulfilled, (state, action) => {
         const { postId, comment } = action.payload;
-        state.feedPosts = updatePostInArray(state.feedPosts, postId, (post) => ({
-          comments: [...(post.comments || []), comment],
-        }));
-        state.currentClubPosts = updatePostInArray(state.currentClubPosts, postId, (post) => ({
-          comments: [...(post.comments || []), comment],
-        }));
+        state.feedPosts = state.feedPosts.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              comments: [...(post.comments || []), comment], // Ensure new array reference for comments
+            };
+          }
+          return post;
+        });
+        state.currentClubPosts = state.currentClubPosts.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              comments: [...(post.comments || []), comment], // Ensure new array reference for comments
+            };
+          }
+          return post;
+        });
       })
-      // NEW: Reducers for deleteComment
       .addCase(deleteComment.fulfilled, (state, action) => {
         const deletedCommentId = action.payload;
         state.feedPosts = state.feedPosts.map(post => {
           if (post.comments && post.comments.some(comment => comment.id === deletedCommentId)) {
             return {
               ...post,
-              comments: post.comments.filter(comment => comment.id !== deletedCommentId)
+              comments: post.comments.filter(comment => comment.id !== deletedCommentId) // Ensure new array reference for comments
             };
           }
           return post;
@@ -558,7 +581,7 @@ const clubSlice = createSlice({
           if (post.comments && post.comments.some(comment => comment.id === deletedCommentId)) {
             return {
               ...post,
-              comments: post.comments.filter(comment => comment.id !== deletedCommentId)
+              comments: post.comments.filter(comment => comment.id !== deletedCommentId) // Ensure new array reference for comments
             };
           }
           return post;
@@ -582,6 +605,10 @@ const clubSlice = createSlice({
         state.postDeletionError = null;
         state.isFeedPostsLoading = false;
         state.feedPostsError = null;
+        state.hasFetchedAllClubs = false;
+        state.hasFetchedMyClubs = false;
+        state.hasFetchedClubPosts = false;
+        state.hasFetchedFeedPosts = false;
       });
   },
 });

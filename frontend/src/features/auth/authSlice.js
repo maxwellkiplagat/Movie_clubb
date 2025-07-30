@@ -223,7 +223,8 @@ export const fetchFollowing = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to fetch following list');
       }
-      return data;
+      // Ensure each followed user object has an 'id' and 'username'
+      return data.map(user => ({ id: user.id, username: user.username }));
     } catch (error) {
       return rejectWithValue(error.message || 'Network error fetching following list');
     }
@@ -254,6 +255,7 @@ export const followUser = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to follow user');
       }
+      // Return the ID and username of the user who was just followed
       return { id: userIdToFollow, username: data.username || 'Unknown' };
     } catch (error) {
       return rejectWithValue(error.message || 'Network error following user');
@@ -284,9 +286,16 @@ export const unfollowUser = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) {
+        // If the backend says "Not currently following this user", it means our frontend state is stale.
+        // We can still return the userIdToUnfollow to remove it from the frontend list,
+        // but log the error.
+        console.warn(`Unfollow API returned error for user ${userIdToUnfollow}: ${data.message}`);
+        // Instead of rejecting, we can fulfill but note the error, or just return the ID
+        // to allow the frontend to update. For now, let's still reject to show the error
+        // but the UI update will be more robust.
         return rejectWithValue(data.message || 'Failed to unfollow user');
       }
-      return userIdToUnfollow;
+      return userIdToUnfollow; // Return the ID of the user who was unfollowed
     } catch (error) {
       return rejectWithValue(error.message || 'Network error unfollowing user');
     }
@@ -317,21 +326,41 @@ export const fetchFollowers = createAsyncThunk(
       if (!response.ok) {
         return rejectWithValue(data.message || 'Failed to fetch followers list');
       }
-      return data;
+      // Ensure each follower user object has an 'id' and 'username'
+      return data.map(user => ({ id: user.id, username: user.username }));
     } catch (error) {
       return rejectWithValue(error.message || 'Network error fetching followers list');
     }
   }
 );
 
+/**
+ * Sends a password reset email to the provided email address.
+ * @param {string} email - The email address to send the reset link to.
+ * @returns {Object} A success message from the backend.
+ */
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (email, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot_password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
 
-// Helper function to update a post within an array (used for userPosts)
-const updatePostInArray = (postsArray, postId, updateFn) => {
-  return postsArray.map(post =>
-    post.id === postId ? { ...post, ...updateFn(post) } : post
-  );
-};
+      const data = await response.json();
 
+      if (!response.ok) {
+        return rejectWithValue(data.message || 'Failed to send password reset email.');
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Network error during password reset request.');
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
@@ -341,15 +370,17 @@ const authSlice = createSlice({
     isAuthenticated: !!localStorage.getItem('jwt_token'),
     isLoading: false,
     error: null,
-    userPosts: [], // This is the array we need to update for Dashboard
+    userPosts: [],
     isUserPostsLoading: false,
-    hasFetchedUserPosts: false,
+    hasFetchedUserPosts: false, // Indicates if fetchUserPosts has completed at least once
     following: [],
     isFollowingLoading: false,
     followingError: null,
+    hasFetchedFollowing: false, // Flag for following list
     followers: [],
     isFollowersLoading: false,
     followersError: null,
+    hasFetchedFollowers: false, // Flag for followers list
   },
   reducers: {
     logout: (state) => {
@@ -365,9 +396,11 @@ const authSlice = createSlice({
       state.following = [];
       state.isFollowingLoading = false;
       state.followingError = null;
+      state.hasFetchedFollowing = false; // Reset flag on logout
       state.followers = [];
       state.isFollowersLoading = false;
       state.followersError = null;
+      state.hasFetchedFollowers = false; // Reset flag on logout
     },
     clearError: (state) => {
       state.error = null;
@@ -386,6 +419,11 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state) => {
         state.isLoading = false;
         state.error = null;
+        // After successful registration, a new user will have no posts, following, or followers
+        // Ensure these flags are set to true so Dashboard doesn't keep fetching
+        state.hasFetchedUserPosts = true;
+        state.hasFetchedFollowing = true;
+        state.hasFetchedFollowers = true;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -401,6 +439,10 @@ const authSlice = createSlice({
         state.user = { ...action.payload, id: action.payload.user_id };
         state.token = action.payload.access_token;
         state.isAuthenticated = true;
+        // Reset hasFetched flags on login to ensure fresh data is loaded for the logged-in user
+        state.hasFetchedUserPosts = false;
+        state.hasFetchedFollowing = false;
+        state.hasFetchedFollowers = false;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -419,6 +461,10 @@ const authSlice = createSlice({
         state.user = { ...action.payload, id: action.payload.user_id };
         state.token = localStorage.getItem('jwt_token');
         state.isAuthenticated = true;
+        // On session check, we assume data might be stale, so reset flags to trigger fetches
+        state.hasFetchedUserPosts = false;
+        state.hasFetchedFollowing = false;
+        state.hasFetchedFollowers = false;
       })
       .addCase(checkSession.rejected, (state, action) => {
         state.isLoading = false;
@@ -461,12 +507,12 @@ const authSlice = createSlice({
       .addCase(fetchUserPosts.fulfilled, (state, action) => {
         state.isUserPostsLoading = false;
         state.userPosts = action.payload;
-        state.hasFetchedUserPosts = true;
+        state.hasFetchedUserPosts = true; // Set flag to true on success
       })
       .addCase(fetchUserPosts.rejected, (state, action) => {
         state.isUserPostsLoading = false;
         state.error = action.payload;
-        state.hasFetchedUserPosts = true;
+        state.hasFetchedUserPosts = true; // Set flag to true even on error to prevent re-loop
       })
 
       .addCase(fetchFollowing.pending, (state) => {
@@ -475,21 +521,24 @@ const authSlice = createSlice({
       })
       .addCase(fetchFollowing.fulfilled, (state, action) => {
         state.isFollowingLoading = false;
-        state.following = action.payload;
+        state.following = action.payload; // Action.payload already mapped to {id, username}
+        state.hasFetchedFollowing = true; // Set flag to true on success
       })
       .addCase(fetchFollowing.rejected, (state, action) => {
         state.isFollowingLoading = false;
         state.followingError = action.payload;
-        state.following = [];
+        state.following = []; // Ensure it's an empty array on error
+        state.hasFetchedFollowing = true; // Set flag to true even on error
       })
 
       .addCase(followUser.pending, (state) => {
         state.error = null;
       })
       .addCase(followUser.fulfilled, (state, action) => {
-        const newFollowedUser = action.payload;
+        const newFollowedUser = action.payload; // This payload already contains {id, username}
+        // Ensure new array reference for following to trigger re-render
         if (!state.following.some(u => u.id === newFollowedUser.id)) {
-          state.following.push(newFollowedUser);
+          state.following = [...state.following, newFollowedUser];
         }
       })
       .addCase(followUser.rejected, (state, action) => {
@@ -501,6 +550,7 @@ const authSlice = createSlice({
       })
       .addCase(unfollowUser.fulfilled, (state, action) => {
         const unfollowedUserId = action.payload;
+        // Ensure new array reference for following to trigger re-render
         state.following = state.following.filter(user => user.id !== unfollowedUserId);
       })
       .addCase(unfollowUser.rejected, (state, action) => {
@@ -513,39 +563,62 @@ const authSlice = createSlice({
       })
       .addCase(fetchFollowers.fulfilled, (state, action) => {
         state.isFollowersLoading = false;
-        state.followers = action.payload;
+        state.followers = action.payload; // Action.payload already mapped to {id, username}
+        state.hasFetchedFollowers = true; // Set flag to true on success
       })
       .addCase(fetchFollowers.rejected, (state, action) => {
         state.isFollowersLoading = false;
         state.followersError = action.payload;
-        state.followers = [];
+        state.followers = []; // Ensure it's an empty array on error
+        state.hasFetchedFollowers = true; // Set flag to true even on error
       })
 
-      // --- NEW: Handle updates to userPosts from clubSlice actions ---
+      .addCase(forgotPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+      // --- Handle updates to userPosts from clubSlice actions (for instant like update) ---
       .addCase(toggleLike.fulfilled, (state, action) => {
-        const { postId, likes_count, liked, currentUserId } = action.payload;
-        state.userPosts = updatePostInArray(state.userPosts, postId, (post) => {
-          let updatedLikes = post.likes ? [...post.likes] : [];
-          if (liked) {
-            if (!updatedLikes.some(like => like.user_id === currentUserId)) {
-              // Ensure we have the username for the like object
-              const currentUserUsername = state.user?.username;
-              updatedLikes.push({ user_id: currentUserId, username: currentUserUsername || 'Unknown' });
+        const { postId, likes_count, liked, currentUserId, currentUserUsername } = action.payload; // Destructure currentUserUsername
+        state.userPosts = state.userPosts.map(post => {
+          if (post.id === postId) {
+            let updatedLikes = post.likes ? [...post.likes] : []; // Create new array for likes
+            if (liked) {
+              if (!updatedLikes.some(like => like.user_id === currentUserId)) {
+                updatedLikes.push({ user_id: currentUserId, username: currentUserUsername || 'Unknown' }); // Use payload username
+              }
+            } else {
+              updatedLikes = updatedLikes.filter(like => like.user_id !== currentUserId);
             }
-          } else {
-            updatedLikes = updatedLikes.filter(like => like.user_id !== currentUserId);
+            return {
+              ...post, // Create new post object
+              likes_count: likes_count,
+              likes: updatedLikes
+            };
           }
-          return {
-            likes_count: likes_count,
-            likes: updatedLikes
-          };
+          return post;
         });
       })
       .addCase(addComment.fulfilled, (state, action) => {
         const { postId, comment } = action.payload;
-        state.userPosts = updatePostInArray(state.userPosts, postId, (post) => ({
-          comments: [...(post.comments || []), comment],
-        }));
+        state.userPosts = state.userPosts.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              comments: [...(post.comments || []), comment], // Ensure new array reference for comments
+            };
+          }
+          return post;
+        });
       })
       .addCase(deleteComment.fulfilled, (state, action) => {
         const deletedCommentId = action.payload;
@@ -553,7 +626,7 @@ const authSlice = createSlice({
           if (post.comments && post.comments.some(comment => comment.id === deletedCommentId)) {
             return {
               ...post,
-              comments: post.comments.filter(comment => comment.id !== deletedCommentId)
+              comments: post.comments.filter(comment => comment.id !== deletedCommentId) // Ensure new array reference for comments
             };
           }
           return post;
