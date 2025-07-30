@@ -1,9 +1,9 @@
 # backend/app/models/user.py
 from sqlalchemy.ext.hybrid import hybrid_property
 from .. import db
-from .__init__ import BaseModelMixin # Assuming BaseModelMixin is in app/models/__init__.py
+from .__init__ import BaseModelMixin 
 from .. import bcrypt
-from datetime import datetime # Import datetime for created_at/updated_at if not already there
+from datetime import datetime 
 
 class User(BaseModelMixin, db.Model):
     __tablename__= 'users'
@@ -14,8 +14,8 @@ class User(BaseModelMixin, db.Model):
     _password_hash = db.Column(db.String, nullable=False)
     # NEW: Added bio column as expected by frontend
     bio = db.Column(db.Text, nullable=True)
-    # Assuming created_at and updated_at are part of BaseModelMixin or need to be added
-    # If BaseModelMixin already handles these, you can remove them here.
+
+    
     # Adding them explicitly for completeness if BaseModelMixin doesn't.
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -100,18 +100,18 @@ class User(BaseModelMixin, db.Model):
                 {
                     'id': follow_obj.followed.id,
                     'username': follow_obj.followed.username,
-                    'email': follow_obj.followed.email # Include email for display if desired
+                    'email': follow_obj.followed.email 
                 }
-                for follow_obj in self.following # Assumes 'following' relationship returns Follow objects
+                for follow_obj in self.following 
             ]
             # This is the crucial part for 'followers'
             data['followers'] = [
                 {
                     'id': follow_obj.follower.id,
                     'username': follow_obj.follower.username,
-                    'email': follow_obj.follower.email # Include email for display if desired
+                    'email': follow_obj.follower.email 
                 }
-                for follow_obj in self.followers # Assumes 'followers' relationship returns Follow objects
+                for follow_obj in self.followers 
             ]
 
         return data
