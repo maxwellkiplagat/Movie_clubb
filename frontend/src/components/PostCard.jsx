@@ -42,10 +42,10 @@ const PostCard = ({ post }) => {
         }));
       }
 
-      console.log(Successfully toggled like for post ${post.id});
+      console.log(`Successfully toggled like for post ${post.id}`);
     } catch (error) {
       console.error("Failed to toggle like:", error);
-      alert(Failed to toggle like: ${error.message || 'An error occurred.'});
+      alert(`Failed to toggle like: ${error.message || 'An error occurred.'}`);
     }
   };
 
@@ -67,14 +67,14 @@ const PostCard = ({ post }) => {
     try {
       if (isFollowing) {
         await dispatch(unfollowUser(post.author_id)).unwrap();
-        console.log(Successfully unfollowed user ${post.author_id});
+        console.log(`Successfully unfollowed user ${post.author_id}`);
       } else {
         await dispatch(followUser(post.author_id)).unwrap();
-        console.log(Successfully followed user ${post.author_id});
+        console.log(`Successfully followed user ${post.author_id}`);
       }
     } catch (error) {
       console.error("Failed to toggle follow:", error);
-      alert(Failed to toggle follow: ${error.message || 'An error occurred.'});
+      alert(`Failed to toggle follow: ${error.message || 'An error occurred.'}`);
     }
   };
 
@@ -86,10 +86,10 @@ const PostCard = ({ post }) => {
     try {
       await dispatch(deletePost(post.id)).unwrap();
       alert("Post deleted successfully!");
-      console.log(Post ${post.id} deleted successfully.);
+      console.log(`Post ${post.id} deleted successfully.`);
     } catch (error) {
       console.error("Failed to delete post:", error);
-      alert(Failed to delete post: ${error.message || 'An error occurred.'});
+      alert(`Failed to delete post: ${error.message || 'An error occurred.'}`);
     }
   };
 
@@ -103,10 +103,10 @@ const PostCard = ({ post }) => {
       try {
         await dispatch(addComment({ postId: post.id, content: newCommentContent.trim() })).unwrap();
         setNewCommentContent('');
-        console.log(Comment added to post ${post.id});
+        console.log(`Comment added to post ${post.id}`);
       } catch (error) {
         console.error("Failed to add comment:", error);
-        alert(Failed to add comment: ${error.message || 'An error occurred.'});
+        alert(`Failed to add comment: ${error.message || 'An error occurred.'}`);
       }
     }
   };
@@ -121,10 +121,10 @@ const PostCard = ({ post }) => {
     }
     try {
       await dispatch(deleteComment(commentId)).unwrap();
-      console.log(Comment ${commentId} deleted successfully.);
+      console.log(`Comment ${commentId} deleted successfully.`);
     } catch (error) {
       console.error("Failed to delete comment:", error);
-      alert(Failed to delete comment: ${error.message || 'An error occurred.'});
+      alert(`Failed to delete comment: ${error.message || 'An error occurred.'}`);
     }
   };
 
@@ -166,7 +166,7 @@ const PostCard = ({ post }) => {
           onClick={() => setCommentsVisible(prev => !prev)}
           className="px-4 py-2 rounded-full bg-gray-600 text-white font-bold hover:bg-gray-700 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75 shadow-md"
         >
-          {commentsVisible ? 'Hide Comments' : Show Comments (${post.comments ? post.comments.length : 0})}
+          {commentsVisible ? 'Hide Comments' : `Show Comments (${post.comments ? post.comments.length : 0})`}
         </button>
 
         {isAuthenticated && isOwnPost && (
