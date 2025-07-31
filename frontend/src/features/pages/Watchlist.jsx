@@ -40,7 +40,7 @@ const Watchlist = () => {
     try {
       await dispatch(updateWatchlistItem({ watchlist_item_id: itemId, status: newStatus })).unwrap();
       console.log(`Watchlist item ${itemId} status toggled to ${newStatus}`);
-      // NEW: Force a re-fetch after successful update for immediate UI sync
+      // Force a re-fetch after successful update for immediate UI sync
       if (user?.id) {
         dispatch(fetchWatchlist(user.id));
       }
@@ -53,7 +53,7 @@ const Watchlist = () => {
     try {
       await dispatch(deleteWatchlistItem(itemId)).unwrap();
       console.log(`Watchlist item ${itemId} removed.`);
-      // NEW: Force a re-fetch after successful deletion for immediate UI sync
+      // Force a re-fetch after successful deletion for immediate UI sync
       if (user?.id) {
         dispatch(fetchWatchlist(user.id));
       }

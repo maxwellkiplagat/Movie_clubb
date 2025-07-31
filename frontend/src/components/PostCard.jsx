@@ -47,7 +47,7 @@ const PostCard = ({ post }) => {
         }));
         console.log(`Dispatched addToWatchlist for "${post.movie_title}".`);
 
-        // NEW: Introduce a small delay before fetching the watchlist
+        // Introduce a small delay before fetching the watchlist
         // This gives the backend a moment to process the new item fully.
         setTimeout(() => {
           if (user?.id) {
