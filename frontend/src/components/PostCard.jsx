@@ -34,7 +34,7 @@ const PostCard = ({ post }) => {
     try {
       await dispatch(toggleLike({ postId: post.id, currentUserId: user.id })).unwrap();
 
-      g
+      
       if (!isLiked && !alreadyInWatchlist) {
         dispatch(addToWatchlist({
           id: post.id,

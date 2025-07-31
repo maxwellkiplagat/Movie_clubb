@@ -23,7 +23,7 @@ const Watchlist = () => {
           {watchlist.map((movie) => (
             <li key={movie.id} className="watchlist-item">
               <span className="watchlist-title">
-                {movie.title} ({movie.name})
+                {movie.title} 
               </span>
               <div className="watchlist-actions">
                 <button
