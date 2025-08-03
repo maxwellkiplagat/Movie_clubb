@@ -7,7 +7,6 @@ name = "pypi"
 flask = "*"
 flask-sqlalchemy = "*"
 psycopg2-binary = "*"
-python-dotenv = "*"
 flask-restful = "*"
 flask-jwt-extended = "*"
 faker = "*"
@@ -16,6 +15,8 @@ flask-migrate = "*"
 flask-bcrypt = "*"
 sqlalchemy-serializer = "*"
 flask-mail = "*"
+gunicorn = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

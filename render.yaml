@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: movieclub-backend
+    env: python
+    region: oregon  # or whatever
+    buildCommand: pip install pipenv && pipenv install
+    startCommand: pipenv run gunicorn -w 4 -b 0.0.0.0:10000 wsgi:app
+    workingDir: backend
+    autoDeploy: true
+    envVars:
+      - key: FLASK_ENV
+        value: production
