@@ -2,10 +2,12 @@ services:
   - type: web
     name: movieclub-backend
     env: python
-    region: frankfurt  # or whatever
-    buildCommand: pip install pipenv && pipenv install
-    startCommand: pipenv run gunicorn -w 4 -b 0.0.0.0:$PORT wsgi:app
-    workingDir: backend
+    region: frankfurt
+    python:
+      version: "3.12.10"  # ADD THIS
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT wsgi:app
+    workingDir: /opt/render/project/src/backend
     autoDeploy: true
     envVars:
       - key: FLASK_ENV
