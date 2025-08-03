@@ -23,7 +23,10 @@ mail = Mail() # NEW: Initialize Flask-Mail
 
 def create_app():
     # Create and configure the Flask application
+    from .config import Config
     app = Flask(__name__)
+    app.config.from_object(Config)
+
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY')
